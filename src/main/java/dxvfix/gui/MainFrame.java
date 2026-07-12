@@ -22,10 +22,13 @@ import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDropEvent;
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class MainFrame extends JFrame {
+
+    private static final String REPORT_BUG_URL = "https://github.com/SergioPimonno/dxvfix/issues/new";
 
     private final DefaultListModel<QueueItem> queueModel = new DefaultListModel<>();
     // Always clamp to the viewport's width, regardless of how wide the renderer's content wants
@@ -133,12 +136,24 @@ public final class MainFrame extends JFrame {
         settings.addActionListener(e -> SettingsDialog.show(this));
         JMenuItem help = new JMenuItem(Messages.get("mainframe.menu.help"));
         help.addActionListener(e -> HelpDialog.show(this));
+        JMenuItem reportBug = new JMenuItem(Messages.get("mainframe.menu.reportBug"));
+        reportBug.addActionListener(e -> openReportBugPage());
         menu.add(checkLicense);
         menu.add(settings);
         menu.addSeparator();
         menu.add(help);
+        menu.add(reportBug);
         bar.add(menu);
         return bar;
+    }
+
+    private void openReportBugPage() {
+        try {
+            Desktop.getDesktop().browse(new URI(REPORT_BUG_URL));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, Messages.get("mainframe.reportBug.failed", ex.getMessage()),
+                    Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void showLicenseStatus() {
