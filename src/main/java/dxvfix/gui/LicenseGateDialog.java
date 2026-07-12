@@ -1,0 +1,108 @@
+package dxvfix.gui;
+
+import dxvfix.license.Fingerprint;
+import dxvfix.license.LicenseVerifier;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+/** Blocking startup gate: requires a valid, machine-matched, signed license file to proceed. */
+public final class LicenseGateDialog extends JDialog {
+
+    private boolean approved = false;
+
+    public LicenseGateDialog() {
+        super((Frame) null, "DXV Frame Doctor — требуется лицензия", true);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        JPanel content = new JPanel(new BorderLayout(10, 10));
+        content.setBorder(new EmptyBorder(16, 16, 16, 16));
+
+        String fingerprint;
+        try {
+            fingerprint = Fingerprint.compute();
+        } catch (Exception e) {
+            fingerprint = "(не удалось определить: " + e.getMessage() + ")";
+        }
+
+        JTextArea info = new JTextArea(
+                "Для этого компьютера не найден действующий файл лицензии.\n\n" +
+                "Код этого устройства (отправьте администратору для получения лицензии):");
+        info.setEditable(false);
+        info.setOpaque(false);
+        info.setLineWrap(true);
+        info.setWrapStyleWord(true);
+        content.add(info, BorderLayout.NORTH);
+
+        JTextField fpField = new JTextField(fingerprint);
+        fpField.setEditable(false);
+        fpField.setFont(new Font(Font.MONOSPACED, Font.BOLD, 16));
+        JButton copyBtn = new JButton("Копировать");
+        String finalFingerprint = fingerprint;
+        copyBtn.addActionListener(e -> {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(finalFingerprint), null);
+            copyBtn.setText("Скопировано!");
+        });
+        JPanel fpPanel = new JPanel(new BorderLayout(6, 6));
+        fpPanel.add(fpField, BorderLayout.CENTER);
+        fpPanel.add(copyBtn, BorderLayout.EAST);
+        content.add(fpPanel, BorderLayout.CENTER);
+
+        JLabel statusLabel = new JLabel(" ");
+        statusLabel.setForeground(new Color(180, 40, 40));
+
+        JButton loadBtn = new JButton("Загрузить файл лицензии…");
+        JButton exitBtn = new JButton("Выход");
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(loadBtn);
+        buttons.add(exitBtn);
+
+        JPanel south = new JPanel(new BorderLayout());
+        south.add(statusLabel, BorderLayout.NORTH);
+        south.add(buttons, BorderLayout.SOUTH);
+        content.add(south, BorderLayout.SOUTH);
+
+        loadBtn.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Файл лицензии (*.lic)", "lic"));
+            if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
+            Path chosen = fc.getSelectedFile().toPath();
+            try {
+                Path dest = LicenseVerifier.defaultLicensePath();
+                Files.createDirectories(dest.getParent());
+                Files.copy(chosen, dest, StandardCopyOption.REPLACE_EXISTING);
+                LicenseVerifier.Result result = LicenseVerifier.verify(dest);
+                if (result.isValid()) {
+                    approved = true;
+                    dispose();
+                } else {
+                    statusLabel.setText("Лицензия недействительна: " + result.status + " — " + result.message);
+                }
+            } catch (Exception ex) {
+                statusLabel.setText("Ошибка: " + ex.getMessage());
+            }
+        });
+        exitBtn.addActionListener(e -> dispose());
+
+        setContentPane(content);
+        setPreferredSize(new Dimension(560, 260));
+        pack();
+        setLocationRelativeTo(null);
+    }
+
+    /** Returns true if a valid license is present (checked first) or was just loaded and approved. */
+    public static boolean ensureLicensed() {
+        LicenseVerifier.Result result = LicenseVerifier.verify(LicenseVerifier.defaultLicensePath());
+        if (result.isValid()) {
+            return true;
+        }
+        LicenseGateDialog dialog = new LicenseGateDialog();
+        dialog.setVisible(true);
+        return dialog.approved;
+    }
+}

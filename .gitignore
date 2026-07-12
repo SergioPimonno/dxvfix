@@ -1,0 +1,19 @@
+# build output
+/out/
+/out-keygen/
+/dist/
+*.jar
+
+# license signing key -- NEVER commit this, it's the master secret for the whole license system
+/license-keys/
+
+# local tooling config
+/.claude/
+
+# large local test assets (not part of the app)
+*.mov
+*.mp4
+
+# OS/editor cruft
+Thumbs.db
+.DS_Store
