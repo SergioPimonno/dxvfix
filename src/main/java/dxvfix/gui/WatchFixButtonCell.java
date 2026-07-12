@@ -1,5 +1,6 @@
 package dxvfix.gui;
 
+import dxvfix.i18n.Messages;
 import dxvfix.watch.WatchedFile;
 
 import javax.swing.*;
@@ -37,10 +38,10 @@ final class WatchFixButtonCell extends AbstractCellEditor implements TableCellRe
     }
 
     private static String labelFor(WatchedFile wf) {
-        if (wf.fixing) return "Исправляется…";
-        if (wf.fixed) return "Исправлено";
-        if (wf.errorMessage != null) return "Ошибка проверки";
-        return "Исправить";
+        if (wf.fixing) return Messages.get("watch.action.fixing");
+        if (wf.fixed) return Messages.get("watch.action.fixed");
+        if (wf.errorMessage != null) return Messages.get("watch.action.checkError");
+        return Messages.get("watch.action.fix");
     }
 
     @Override

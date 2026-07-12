@@ -3,6 +3,7 @@
 /out-keygen/
 /dist/
 *.jar
+!/lib/*.jar
 
 # license signing key -- NEVER commit this, it's the master secret for the whole license system
 /license-keys/

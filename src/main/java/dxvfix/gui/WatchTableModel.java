@@ -1,5 +1,6 @@
 package dxvfix.gui;
 
+import dxvfix.i18n.Messages;
 import dxvfix.watch.WatchedFile;
 
 import javax.swing.table.AbstractTableModel;
@@ -10,7 +11,11 @@ import java.util.List;
 
 final class WatchTableModel extends AbstractTableModel {
 
-    private static final String[] COLUMNS = {"Файл", "Битых кадров", "Обнаружено", "Исправлено", "Действие"};
+    private static final String[] COLUMNS = {
+            Messages.get("watch.column.file"), Messages.get("watch.column.badFrames"),
+            Messages.get("watch.column.detected"), Messages.get("watch.column.fixed"),
+            Messages.get("watch.column.action")
+    };
     static final int ACTION_COLUMN = 4;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -84,11 +89,12 @@ final class WatchTableModel extends AbstractTableModel {
             case 0:
                 return relativize(wf.sourceFile);
             case 1:
-                return wf.errorMessage != null ? "ошибка: " + wf.errorMessage : wf.badCount + " из " + wf.totalFrames;
+                return wf.errorMessage != null ? Messages.get("watch.badFrames.error", wf.errorMessage)
+                        : Messages.get("watch.badFrames.count", wf.badCount, wf.totalFrames);
             case 2:
                 return wf.detectedAt == null ? "" : wf.detectedAt.format(TIME_FMT);
             case 3:
-                return wf.fixed ? ("да, " + wf.fixedAt.format(TIME_FMT)) : "-";
+                return wf.fixed ? Messages.get("watch.fixed.yes", wf.fixedAt.format(TIME_FMT)) : "-";
             case ACTION_COLUMN:
                 return wf;
             default:

@@ -1,6 +1,7 @@
 package dxvfix.gui;
 
 import dxvfix.ffmpeg.FfmpegLocator;
+import dxvfix.i18n.Messages;
 import dxvfix.scan.ScanEngine;
 import dxvfix.watch.ShowWatcher;
 import dxvfix.watch.WatchedFile;
@@ -28,14 +29,14 @@ final class ShowWatchPanel extends JPanel {
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final JTextField dirField = new JTextField();
-    private final JButton browseBtn = new JButton("Обзор…");
-    private final JRadioButton fastModeRadio = new JRadioButton("Быстрая проверка", true);
-    private final JRadioButton deepModeRadio = new JRadioButton("Углублённая проверка");
-    private final JRadioButton duplicateStrategyRadio = new JRadioButton("Дублировать соседний кадр", true);
-    private final JRadioButton generateStrategyRadio = new JRadioButton("Сгенерировать кадр (интерполяция)");
-    private final JCheckBox autoFixBox = new JCheckBox("Автоисправление", false);
-    private final JButton startStopBtn = new JButton("Начать сопровождение");
-    private final JLabel statusLabel = new JLabel("Остановлено");
+    private final JButton browseBtn = new JButton(Messages.get("showwatch.browse"));
+    private final JRadioButton fastModeRadio = new JRadioButton(Messages.get("showwatch.mode.fast"), true);
+    private final JRadioButton deepModeRadio = new JRadioButton(Messages.get("showwatch.mode.deep"));
+    private final JRadioButton duplicateStrategyRadio = new JRadioButton(Messages.get("showwatch.strategy.duplicate"), true);
+    private final JRadioButton generateStrategyRadio = new JRadioButton(Messages.get("showwatch.strategy.generate"));
+    private final JCheckBox autoFixBox = new JCheckBox(Messages.get("showwatch.autoFix"), false);
+    private final JButton startStopBtn = new JButton(Messages.get("showwatch.start"));
+    private final JLabel statusLabel = new JLabel(Messages.get("showwatch.status.stopped"));
     private final JLabel ffmpegStatusLabel = new JLabel(" ");
     private final WatchTableModel tableModel = new WatchTableModel();
     private final JTable table = new JTable(tableModel);
@@ -62,7 +63,7 @@ final class ShowWatchPanel extends JPanel {
             public void onFileUpdated(WatchedFile file) {
                 SwingUtilities.invokeLater(() -> {
                     tableModel.upsert(file);
-                    statusLabel.setText("Активно | отслеживается битых файлов: " + tableModel.size());
+                    statusLabel.setText(Messages.get("showwatch.status.active", tableModel.size()));
                 });
             }
 
@@ -70,7 +71,7 @@ final class ShowWatchPanel extends JPanel {
             public void onFileCleared(File sourceFile) {
                 SwingUtilities.invokeLater(() -> {
                     tableModel.remove(sourceFile);
-                    statusLabel.setText("Активно | отслеживается битых файлов: " + tableModel.size());
+                    statusLabel.setText(Messages.get("showwatch.status.active", tableModel.size()));
                 });
             }
 
@@ -86,7 +87,7 @@ final class ShowWatchPanel extends JPanel {
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
 
         JPanel dirRow = new JPanel(new BorderLayout(6, 6));
-        dirRow.add(new JLabel("Папка шоу:"), BorderLayout.WEST);
+        dirRow.add(new JLabel(Messages.get("showwatch.dirLabel")), BorderLayout.WEST);
         dirRow.add(dirField, BorderLayout.CENTER);
         dirRow.add(browseBtn, BorderLayout.EAST);
         dirRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -96,7 +97,7 @@ final class ShowWatchPanel extends JPanel {
         modeGroup.add(fastModeRadio);
         modeGroup.add(deepModeRadio);
         JPanel modeRow = new JPanel(new WrapLayout(FlowLayout.LEFT));
-        modeRow.add(new JLabel("Режим проверки:"));
+        modeRow.add(new JLabel(Messages.get("showwatch.modeLabel")));
         modeRow.add(fastModeRadio);
         modeRow.add(deepModeRadio);
         modeRow.add(ffmpegStatusLabel);
@@ -107,13 +108,13 @@ final class ShowWatchPanel extends JPanel {
         strategyGroup.add(duplicateStrategyRadio);
         strategyGroup.add(generateStrategyRadio);
         JPanel strategyRow = new JPanel(new WrapLayout(FlowLayout.LEFT));
-        strategyRow.add(new JLabel("Способ починки:"));
+        strategyRow.add(new JLabel(Messages.get("showwatch.strategyLabel")));
         strategyRow.add(duplicateStrategyRadio);
         strategyRow.add(generateStrategyRadio);
         strategyRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(strategyRow);
 
-        JLabel hint = new JLabel("Для сопровождения в реальном времени рекомендуется быстрый режим и дублирование — меньше нагрузка на систему.");
+        JLabel hint = new JLabel(Messages.get("showwatch.hint"));
         hint.setFont(hint.getFont().deriveFont(Font.ITALIC, hint.getFont().getSize2D() - 1f));
         hint.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(hint);
@@ -142,7 +143,7 @@ final class ShowWatchPanel extends JPanel {
         split.setResizeWeight(0.65);
 
         JScrollPane tableScroll = new JScrollPane(table);
-        tableScroll.setBorder(new TitledBorder("Повреждённые файлы"));
+        tableScroll.setBorder(new TitledBorder(Messages.get("showwatch.table.title")));
 
         javax.swing.table.TableRowSorter<WatchTableModel> sorter = new javax.swing.table.TableRowSorter<>(tableModel);
         sorter.setSortable(WatchTableModel.ACTION_COLUMN, false); // column holds a WatchedFile, not sortable text
@@ -157,7 +158,7 @@ final class ShowWatchPanel extends JPanel {
         log.setEditable(false);
         log.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
         JScrollPane logScroll = new JScrollPane(log);
-        logScroll.setBorder(new TitledBorder("Журнал"));
+        logScroll.setBorder(new TitledBorder(Messages.get("showwatch.log.title")));
         split.setBottomComponent(logScroll);
 
         split.setDividerLocation(300);
@@ -167,11 +168,11 @@ final class ShowWatchPanel extends JPanel {
     private void refreshFfmpegStatus() {
         ffmpegPath = FfmpegLocator.find();
         if (ffmpegPath != null) {
-            ffmpegStatusLabel.setText("ffmpeg найден");
+            ffmpegStatusLabel.setText(Messages.get("showwatch.ffmpeg.found"));
             deepModeRadio.setEnabled(true);
             generateStrategyRadio.setEnabled(true);
         } else {
-            ffmpegStatusLabel.setText("ffmpeg не найден — доступна только быстрая проверка и дублирование");
+            ffmpegStatusLabel.setText(Messages.get("showwatch.ffmpeg.notFound"));
             deepModeRadio.setEnabled(false);
             if (deepModeRadio.isSelected()) fastModeRadio.setSelected(true);
             generateStrategyRadio.setEnabled(false);
@@ -204,12 +205,14 @@ final class ShowWatchPanel extends JPanel {
     private void startWatching() {
         String path = dirField.getText().trim();
         if (path.isBlank()) {
-            JOptionPane.showMessageDialog(this, "Укажите папку шоу.", "Нет папки", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.get("showwatch.noDirMessage"),
+                    Messages.get("showwatch.noDirTitle"), JOptionPane.WARNING_MESSAGE);
             return;
         }
         File dir = new File(path);
         if (!dir.isDirectory()) {
-            JOptionPane.showMessageDialog(this, "Папка не найдена: " + path, "Ошибка", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.get("showwatch.dirNotFound", path),
+                    Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -224,8 +227,8 @@ final class ShowWatchPanel extends JPanel {
         log.setText("");
 
         watcher.start(dir, mode, useGenerate, autoFix, ffmpegPath);
-        startStopBtn.setText("Остановить сопровождение");
-        statusLabel.setText("Активно | отслеживается битых файлов: 0");
+        startStopBtn.setText(Messages.get("showwatch.stop"));
+        statusLabel.setText(Messages.get("showwatch.status.active", 0));
         setControlsEnabledWhileEditable(false);
     }
 
@@ -234,8 +237,8 @@ final class ShowWatchPanel extends JPanel {
     }
 
     private void onStopped() {
-        startStopBtn.setText("Начать сопровождение");
-        statusLabel.setText("Остановлено | последний список ниже сохранён для справки");
+        startStopBtn.setText(Messages.get("showwatch.start"));
+        statusLabel.setText(Messages.get("showwatch.status.stoppedWithHistory"));
         setControlsEnabledWhileEditable(true);
     }
 

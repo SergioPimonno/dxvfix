@@ -1,5 +1,6 @@
 package dxvfix.gui;
 
+import dxvfix.i18n.Messages;
 import dxvfix.license.Fingerprint;
 import dxvfix.license.LicenseVerifier;
 
@@ -17,7 +18,7 @@ public final class LicenseGateDialog extends JDialog {
     private boolean approved = false;
 
     public LicenseGateDialog() {
-        super((Frame) null, "DXV Frame Doctor — требуется лицензия", true);
+        super((Frame) null, Messages.get("licenseGate.title"), true);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JPanel content = new JPanel(new BorderLayout(10, 10));
@@ -27,12 +28,10 @@ public final class LicenseGateDialog extends JDialog {
         try {
             fingerprint = Fingerprint.compute();
         } catch (Exception e) {
-            fingerprint = "(не удалось определить: " + e.getMessage() + ")";
+            fingerprint = Messages.get("licenseGate.fingerprintUnknown", e.getMessage());
         }
 
-        JTextArea info = new JTextArea(
-                "Для этого компьютера не найден действующий файл лицензии.\n\n" +
-                "Код этого устройства (отправьте администратору для получения лицензии):");
+        JTextArea info = new JTextArea(Messages.get("licenseGate.info"));
         info.setEditable(false);
         info.setOpaque(false);
         info.setLineWrap(true);
@@ -42,11 +41,11 @@ public final class LicenseGateDialog extends JDialog {
         JTextField fpField = new JTextField(fingerprint);
         fpField.setEditable(false);
         fpField.setFont(new Font(Font.MONOSPACED, Font.BOLD, 16));
-        JButton copyBtn = new JButton("Копировать");
+        JButton copyBtn = new JButton(Messages.get("licenseGate.copy"));
         String finalFingerprint = fingerprint;
         copyBtn.addActionListener(e -> {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(finalFingerprint), null);
-            copyBtn.setText("Скопировано!");
+            copyBtn.setText(Messages.get("licenseGate.copied"));
         });
         JPanel fpPanel = new JPanel(new BorderLayout(6, 6));
         fpPanel.add(fpField, BorderLayout.CENTER);
@@ -56,8 +55,8 @@ public final class LicenseGateDialog extends JDialog {
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setForeground(new Color(180, 40, 40));
 
-        JButton loadBtn = new JButton("Загрузить файл лицензии…");
-        JButton exitBtn = new JButton("Выход");
+        JButton loadBtn = new JButton(Messages.get("licenseGate.loadFile"));
+        JButton exitBtn = new JButton(Messages.get("licenseGate.exit"));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(loadBtn);
         buttons.add(exitBtn);
@@ -69,7 +68,7 @@ public final class LicenseGateDialog extends JDialog {
 
         loadBtn.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();
-            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Файл лицензии (*.lic)", "lic"));
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(Messages.get("licenseGate.filechooser.license"), "lic"));
             if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) return;
             Path chosen = fc.getSelectedFile().toPath();
             try {
@@ -81,10 +80,10 @@ public final class LicenseGateDialog extends JDialog {
                     approved = true;
                     dispose();
                 } else {
-                    statusLabel.setText("Лицензия недействительна: " + result.status + " — " + result.message);
+                    statusLabel.setText(Messages.get("licenseGate.invalid", result.status, result.message));
                 }
             } catch (Exception ex) {
-                statusLabel.setText("Ошибка: " + ex.getMessage());
+                statusLabel.setText(Messages.get("licenseGate.error", ex.getMessage()));
             }
         });
         exitBtn.addActionListener(e -> dispose());

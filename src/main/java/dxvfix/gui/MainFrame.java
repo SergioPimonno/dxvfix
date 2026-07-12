@@ -2,6 +2,7 @@ package dxvfix.gui;
 
 import dxvfix.ffmpeg.FfmpegLocator;
 import dxvfix.generate.FrameGenerator;
+import dxvfix.i18n.Messages;
 import dxvfix.license.Fingerprint;
 import dxvfix.license.LicenseVerifier;
 import dxvfix.queue.QueueItem;
@@ -37,18 +38,18 @@ public final class MainFrame extends JFrame {
             return true;
         }
     };
-    private final JButton addFilesBtn = new JButton("Добавить файлы…");
-    private final JButton removeBtn = new JButton("Удалить выбранные файлы");
-    private final JButton scanQueueBtn = new JButton("Сканировать очередь");
+    private final JButton addFilesBtn = new JButton(Messages.get("mainframe.addFiles"));
+    private final JButton removeBtn = new JButton(Messages.get("mainframe.removeSelected"));
+    private final JButton scanQueueBtn = new JButton(Messages.get("mainframe.scanQueue"));
 
-    private final JButton fixBtn = new JButton("Исправить и сохранить как…");
-    private final JRadioButton duplicateStrategyRadio = new JRadioButton("Дублировать соседний кадр", true);
-    private final JRadioButton generateStrategyRadio = new JRadioButton("Сгенерировать кадр (интерполяция, экспериментально)");
-    private final JCheckBox problemsOnlyBox = new JCheckBox("Показывать только проблемные кадры", true);
-    private final JRadioButton fastModeRadio = new JRadioButton("Быстрая проверка", true);
-    private final JRadioButton deepModeRadio = new JRadioButton("Углублённая проверка (декодирование через ffmpeg)");
-    private final JButton ffmpegBtn = new JButton("ffmpeg…");
-    private final JButton ffmpegDownloadBtn = new JButton("Скачать и установить ffmpeg…");
+    private final JButton fixBtn = new JButton(Messages.get("mainframe.fixSaveAs"));
+    private final JRadioButton duplicateStrategyRadio = new JRadioButton(Messages.get("mainframe.strategy.duplicate"), true);
+    private final JRadioButton generateStrategyRadio = new JRadioButton(Messages.get("mainframe.strategy.generate"));
+    private final JCheckBox problemsOnlyBox = new JCheckBox(Messages.get("mainframe.problemsOnly"), true);
+    private final JRadioButton fastModeRadio = new JRadioButton(Messages.get("mainframe.mode.fast"), true);
+    private final JRadioButton deepModeRadio = new JRadioButton(Messages.get("mainframe.mode.deep"));
+    private final JButton ffmpegBtn = new JButton(Messages.get("mainframe.ffmpegBtn"));
+    private final JButton ffmpegDownloadBtn = new JButton(Messages.get("mainframe.ffmpegDownloadBtn"));
     private final JLabel ffmpegStatusLabel = new JLabel(" ");
     private final JProgressBar progressBar = new JProgressBar(0, 100);
     private final JLabel summaryLabel = new JLabel(" ");
@@ -60,7 +61,7 @@ public final class MainFrame extends JFrame {
     private double queuePanelProportion = 280.0 / 1180.0;
 
     public MainFrame() {
-        super("DXV Frame Doctor — очередь проверки и починки видеофайлов");
+        super(Messages.get("mainframe.title"));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(8, 8));
         ((JComponent) getContentPane()).setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -71,8 +72,8 @@ public final class MainFrame extends JFrame {
         installProportionalDividerHandling(split);
 
         JTabbedPane tabs = new JTabbedPane();
-        tabs.addTab("Пакетная проверка", split);
-        tabs.addTab("Сопровождение шоу", new ShowWatchPanel());
+        tabs.addTab(Messages.get("mainframe.tab.queue"), split);
+        tabs.addTab(Messages.get("mainframe.tab.showWatch"), new ShowWatchPanel());
         add(tabs, BorderLayout.CENTER);
 
         installDragAndDrop();
@@ -125,12 +126,15 @@ public final class MainFrame extends JFrame {
 
     private JMenuBar buildMenuBar() {
         JMenuBar bar = new JMenuBar();
-        JMenu menu = new JMenu("Меню");
-        JMenuItem checkLicense = new JMenuItem("Проверить лицензию…");
+        JMenu menu = new JMenu(Messages.get("mainframe.menu.menu"));
+        JMenuItem checkLicense = new JMenuItem(Messages.get("mainframe.menu.checkLicense"));
         checkLicense.addActionListener(e -> showLicenseStatus());
-        JMenuItem help = new JMenuItem("Справка…");
+        JMenuItem settings = new JMenuItem(Messages.get("mainframe.menu.settings"));
+        settings.addActionListener(e -> SettingsDialog.show(this));
+        JMenuItem help = new JMenuItem(Messages.get("mainframe.menu.help"));
         help.addActionListener(e -> HelpDialog.show(this));
         menu.add(checkLicense);
+        menu.add(settings);
         menu.addSeparator();
         menu.add(help);
         bar.add(menu);
@@ -143,35 +147,37 @@ public final class MainFrame extends JFrame {
         try {
             fingerprint = Fingerprint.compute();
         } catch (Exception ex) {
-            fingerprint = "не удалось определить (" + ex.getMessage() + ")";
+            fingerprint = Messages.get("mainframe.license.fingerprintUnknown", ex.getMessage());
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Статус: ").append(translateLicenseStatus(result.status)).append('\n');
+        sb.append(Messages.get("mainframe.license.status", translateLicenseStatus(result.status))).append('\n');
         if (result.record != null) {
-            sb.append("Метка: ").append(result.record.label.isBlank() ? "-" : result.record.label).append('\n');
-            sb.append("Fingerprint в лицензии: ").append(result.record.fingerprint).append('\n');
-            sb.append("Выдана: ").append(result.record.issued).append('\n');
-            sb.append("Истекает: ").append(result.record.expires == null ? "бессрочно" : result.record.expires).append('\n');
+            sb.append(Messages.get("mainframe.license.label",
+                    result.record.label.isBlank() ? "-" : result.record.label)).append('\n');
+            sb.append(Messages.get("mainframe.license.fingerprintInLicense", result.record.fingerprint)).append('\n');
+            sb.append(Messages.get("mainframe.license.issued", result.record.issued)).append('\n');
+            sb.append(Messages.get("mainframe.license.expires",
+                    result.record.expires == null ? Messages.get("mainframe.license.expiresNever") : result.record.expires)).append('\n');
         }
-        sb.append('\n').append("Fingerprint этого устройства: ").append(fingerprint);
+        sb.append('\n').append(Messages.get("mainframe.license.deviceFingerprint", fingerprint));
         if (!result.isValid()) {
             sb.append("\n\n").append(result.message);
         }
 
-        JOptionPane.showMessageDialog(this, sb.toString(), "Проверка лицензии",
+        JOptionPane.showMessageDialog(this, sb.toString(), Messages.get("mainframe.license.dialogTitle"),
                 result.isValid() ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
     }
 
     private static String translateLicenseStatus(LicenseVerifier.Status status) {
         switch (status) {
-            case VALID: return "действительна";
-            case FILE_NOT_FOUND: return "файл лицензии не найден";
-            case MALFORMED: return "файл лицензии повреждён";
-            case BAD_SIGNATURE: return "подпись недействительна";
-            case FINGERPRINT_MISMATCH: return "не подходит для этого устройства";
-            case EXPIRED: return "истекла";
-            case NO_PUBLIC_KEY: return "не удалось проверить (нет встроенного публичного ключа)";
+            case VALID: return Messages.get("mainframe.license.status.valid");
+            case FILE_NOT_FOUND: return Messages.get("mainframe.license.status.fileNotFound");
+            case MALFORMED: return Messages.get("mainframe.license.status.malformed");
+            case BAD_SIGNATURE: return Messages.get("mainframe.license.status.badSignature");
+            case FINGERPRINT_MISMATCH: return Messages.get("mainframe.license.status.fingerprintMismatch");
+            case EXPIRED: return Messages.get("mainframe.license.status.expired");
+            case NO_PUBLIC_KEY: return Messages.get("mainframe.license.status.noPublicKey");
             default: return status.toString();
         }
     }
@@ -180,7 +186,7 @@ public final class MainFrame extends JFrame {
 
     private JComponent buildQueuePanel() {
         JPanel left = new JPanel(new BorderLayout(6, 6));
-        left.setBorder(new TitledBorder("Очередь файлов"));
+        left.setBorder(new TitledBorder(Messages.get("mainframe.queue.title")));
 
         queueList.setCellRenderer(new QueueListCellRenderer());
         queueList.setSelectionMode(javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -215,7 +221,7 @@ public final class MainFrame extends JFrame {
         strategyGroup.add(duplicateStrategyRadio);
         strategyGroup.add(generateStrategyRadio);
         JPanel strategyPanel = new JPanel(new WrapLayout(FlowLayout.LEFT));
-        strategyPanel.add(new JLabel("Способ починки:"));
+        strategyPanel.add(new JLabel(Messages.get("mainframe.strategyLabel")));
         strategyPanel.add(duplicateStrategyRadio);
         strategyPanel.add(generateStrategyRadio);
 
@@ -238,7 +244,7 @@ public final class MainFrame extends JFrame {
         table.setAutoCreateRowSorter(true);
         table.getColumnModel().getColumn(6).setPreferredWidth(360);
         JScrollPane sp = new JScrollPane(table);
-        sp.setBorder(new TitledBorder("Результаты по кадрам выбранного файла"));
+        sp.setBorder(new TitledBorder(Messages.get("mainframe.table.title")));
         right.add(sp, BorderLayout.CENTER);
 
         JPanel bottom = new JPanel(new BorderLayout(6, 6));
@@ -262,11 +268,11 @@ public final class MainFrame extends JFrame {
     private void refreshFfmpegStatus() {
         ffmpegPath = FfmpegLocator.find();
         if (ffmpegPath != null) {
-            ffmpegStatusLabel.setText("ffmpeg: " + ffmpegPath);
+            ffmpegStatusLabel.setText(Messages.get("mainframe.ffmpeg.foundStatus", ffmpegPath));
             deepModeRadio.setEnabled(true);
             generateStrategyRadio.setEnabled(true);
         } else {
-            ffmpegStatusLabel.setText("ffmpeg не найден — глубокая проверка и генерация кадров недоступны");
+            ffmpegStatusLabel.setText(Messages.get("mainframe.ffmpeg.notFoundStatus"));
             deepModeRadio.setEnabled(false);
             if (deepModeRadio.isSelected()) fastModeRadio.setSelected(true);
             generateStrategyRadio.setEnabled(false);
@@ -288,7 +294,7 @@ public final class MainFrame extends JFrame {
                     evt.dropComplete(true);
                 } catch (Exception e) {
                     evt.dropComplete(false);
-                    showError("Не удалось принять файлы", e);
+                    showError(Messages.get("mainframe.dnd.acceptFailedTitle"), e);
                 }
             }
         };
@@ -301,7 +307,7 @@ public final class MainFrame extends JFrame {
             JFileChooser fc = new JFileChooser();
             fc.setMultiSelectionEnabled(true);
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("QuickTime/MP4 (*.mov, *.mp4) или папка", "mov", "mp4"));
+            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(Messages.get("mainframe.filechooser.videoFilter"), "mov", "mp4"));
             if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 addFilesExpandingFolders(List.of(fc.getSelectedFiles()));
             }
@@ -323,8 +329,8 @@ public final class MainFrame extends JFrame {
                     FfmpegLocator.setConfiguredPath(candidate);
                     refreshFfmpegStatus();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Не удалось запустить этот файл как ffmpeg.",
-                            "Ошибка", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, Messages.get("mainframe.ffmpeg.notExecutable"),
+                            Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -336,10 +342,9 @@ public final class MainFrame extends JFrame {
 
     private void runFfmpegDownload() {
         int choice = JOptionPane.showConfirmDialog(this,
-                "Будет скачан архив (~100 МБ) с официальной сборкой ffmpeg для Windows:\n" +
-                        dxvfix.ffmpeg.FfmpegInstaller.DOWNLOAD_URL + "\n\n" +
-                        "Установится в: " + dxvfix.ffmpeg.FfmpegInstaller.installDir() + "\n\nПродолжить?",
-                "Скачать ffmpeg", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                Messages.get("mainframe.ffmpeg.downloadConfirm",
+                        dxvfix.ffmpeg.FfmpegInstaller.DOWNLOAD_URL, dxvfix.ffmpeg.FfmpegInstaller.installDir()),
+                Messages.get("mainframe.ffmpeg.downloadTitle"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (choice != JOptionPane.YES_OPTION) return;
 
         ffmpegDownloadBtn.setEnabled(false);
@@ -378,16 +383,16 @@ public final class MainFrame extends JFrame {
                     java.nio.file.Path installed = get();
                     FfmpegLocator.setConfiguredPath(installed.toAbsolutePath().toString());
                     refreshFfmpegStatus();
-                    summaryLabel.setText("ffmpeg установлен: " + installed);
+                    summaryLabel.setText(Messages.get("mainframe.ffmpeg.installedStatus", installed));
                     JOptionPane.showMessageDialog(MainFrame.this,
-                            "ffmpeg установлен и готов к использованию:\n" + installed,
-                            "Готово", JOptionPane.INFORMATION_MESSAGE);
+                            Messages.get("mainframe.ffmpeg.installedMessage", installed),
+                            Messages.get("mainframe.ffmpeg.installedTitle"), JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
                     Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-                    summaryLabel.setText("Не удалось установить ffmpeg.");
+                    summaryLabel.setText(Messages.get("mainframe.ffmpeg.installFailedStatus"));
                     JOptionPane.showMessageDialog(MainFrame.this,
-                            "Не удалось скачать/установить ffmpeg: " + cause.getMessage(),
-                            "Ошибка", JOptionPane.ERROR_MESSAGE);
+                            Messages.get("mainframe.ffmpeg.installFailedMessage", cause.getMessage()),
+                            Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
@@ -406,7 +411,7 @@ public final class MainFrame extends JFrame {
             return;
         }
 
-        summaryLabel.setText("Поиск видеофайлов в папках…");
+        summaryLabel.setText(Messages.get("mainframe.searchingFolders"));
         SwingWorker<List<File>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<File> doInBackground() {
@@ -426,9 +431,9 @@ public final class MainFrame extends JFrame {
                 try {
                     List<File> collected = get();
                     addFiles(collected);
-                    summaryLabel.setText("Добавлено файлов: " + collected.size());
+                    summaryLabel.setText(Messages.get("mainframe.filesAdded", collected.size()));
                 } catch (Exception ex) {
-                    showError("Не удалось обработать папки", ex);
+                    showError(Messages.get("mainframe.foldersFailedTitle"), ex);
                     summaryLabel.setText(" ");
                 }
             }
@@ -470,8 +475,8 @@ public final class MainFrame extends JFrame {
         queueList.repaint();
         if (skipped > 0) {
             JOptionPane.showMessageDialog(this,
-                    skipped + " файл(ов) сейчас сканируется и не был(и) удалён(ы).",
-                    "Нельзя удалить", JOptionPane.WARNING_MESSAGE);
+                    Messages.get("mainframe.removeBlockedMessage", skipped),
+                    Messages.get("mainframe.removeBlockedTitle"), JOptionPane.WARNING_MESSAGE);
         }
     }
 
@@ -525,16 +530,16 @@ public final class MainFrame extends JFrame {
         switch (item.status) {
             case PENDING:
                 tableModel.setFrames(java.util.Collections.emptyList());
-                summaryLabel.setText(item.file.getName() + " — ожидает сканирования");
+                summaryLabel.setText(Messages.get("mainframe.status.pendingScan", item.file.getName()));
                 fixBtn.setEnabled(false);
                 break;
             case SCANNING:
-                summaryLabel.setText(item.file.getName() + " — сканирование…");
+                summaryLabel.setText(Messages.get("mainframe.status.scanning", item.file.getName()));
                 fixBtn.setEnabled(false);
                 break;
             case ERROR:
                 tableModel.setFrames(java.util.Collections.emptyList());
-                summaryLabel.setText(item.file.getName() + " — ошибка: " + item.errorMessage);
+                summaryLabel.setText(Messages.get("mainframe.status.error", item.file.getName(), item.errorMessage));
                 fixBtn.setEnabled(false);
                 break;
             case DONE:
@@ -548,12 +553,11 @@ public final class MainFrame extends JFrame {
         tableModel.setFrames(scan.frames);
         int bad = scan.badCount();
         int shallow = scan.shallowCount();
-        summaryLabel.setText(String.format(
-                "%s | Кадров: %d | Битых: %d | Поверхностно проверенных: %d | Кодек: %s | Трек: %dx%d | Режим: %s%s",
+        summaryLabel.setText(Messages.get("mainframe.summary",
                 item.file.getName(), scan.frames.size(), bad, shallow,
                 scan.videoTrack.codecKind.label(), scan.videoTrack.width, scan.videoTrack.height,
-                item.lastMode == ScanEngine.Mode.DEEP ? "углублённый" : "быстрый",
-                item.repaired ? " | исправлен" : ""));
+                Messages.get(item.lastMode == ScanEngine.Mode.DEEP ? "mainframe.summary.modeDeep" : "mainframe.summary.modeFast"),
+                item.repaired ? Messages.get("mainframe.summary.repairedSuffix") : ""));
         fixBtn.setEnabled(bad > 0);
     }
 
@@ -567,7 +571,8 @@ public final class MainFrame extends JFrame {
             if (it.status == QueueItem.Status.PENDING) toProcess.add(it);
         }
         if (toProcess.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Нет файлов, ожидающих сканирования.", "Очередь пуста", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.get("mainframe.queue.emptyMessage"),
+                    Messages.get("mainframe.queue.emptyTitle"), JOptionPane.INFORMATION_MESSAGE);
             return;
         }
 
@@ -606,7 +611,7 @@ public final class MainFrame extends JFrame {
                     switch ((String) c[0]) {
                         case "start":
                             QueueItem item = (QueueItem) c[1];
-                            summaryLabel.setText(String.format("Сканирование файла %d из %d: %s", c[2], c[3], item.file.getName()));
+                            summaryLabel.setText(Messages.get("mainframe.scanning.progress", c[2], c[3], item.file.getName()));
                             progressBar.setValue(0);
                             break;
                         case "progress":
@@ -628,7 +633,7 @@ public final class MainFrame extends JFrame {
                 setQueueControlsEnabled(true);
                 queueList.repaint();
                 updateSelectionDependentUi();
-                summaryLabel.setText("Сканирование очереди завершено.");
+                summaryLabel.setText(Messages.get("mainframe.scanning.done"));
             }
         };
         worker.execute();
@@ -663,7 +668,7 @@ public final class MainFrame extends JFrame {
         String ffmpegForThisFix = ffmpegPath;
 
         fixBtn.setEnabled(false);
-        summaryLabel.setText(useGeneration ? "Генерация кадров…" : "Исправление и запись файла…");
+        summaryLabel.setText(Messages.get(useGeneration ? "mainframe.fix.generating" : "mainframe.fix.writing"));
         progressBar.setIndeterminate(!useGeneration);
         progressBar.setValue(0);
 
@@ -691,17 +696,24 @@ public final class MainFrame extends JFrame {
                     item.repaired = true;
                     showScanResult(item);
                     int duplicated = s.framesReplaced - generatedCount;
-                    JOptionPane.showMessageDialog(MainFrame.this,
-                            "Сохранено: " + outFile.getAbsolutePath() +
-                                    "\nЗаменено кадров: " + s.framesReplaced +
-                                    (useGeneration ? "\n  из них сгенерировано интерполяцией: " + generatedCount +
-                                            (duplicated > 0 ? "\n  дублированием (генерация недоступна/не удалась): " + duplicated : "") : "") +
-                                    (s.framesUnrepairable > 0 ? "\nНе удалось найти замену для: " + s.framesUnrepairable + " кадров" : "") +
-                                    "\nОтчёт сохранён рядом с файлом (*_report.txt).",
-                            "Готово", JOptionPane.INFORMATION_MESSAGE);
+                    StringBuilder msg = new StringBuilder();
+                    msg.append(Messages.get("mainframe.fix.savedLine", outFile.getAbsolutePath())).append('\n');
+                    msg.append(Messages.get("mainframe.fix.replacedLine", s.framesReplaced));
+                    if (useGeneration) {
+                        msg.append("\n  ").append(Messages.get("mainframe.fix.generatedLine", generatedCount));
+                        if (duplicated > 0) {
+                            msg.append("\n  ").append(Messages.get("mainframe.fix.duplicatedLine", duplicated));
+                        }
+                    }
+                    if (s.framesUnrepairable > 0) {
+                        msg.append('\n').append(Messages.get("mainframe.fix.unrepairableLine", s.framesUnrepairable));
+                    }
+                    msg.append('\n').append(Messages.get("mainframe.fix.reportLine"));
+                    JOptionPane.showMessageDialog(MainFrame.this, msg.toString(),
+                            Messages.get("mainframe.fix.doneTitle"), JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception ex) {
-                    showError("Ошибка исправления файла", ex);
-                    summaryLabel.setText("Ошибка исправления.");
+                    showError(Messages.get("mainframe.fix.errorTitle"), ex);
+                    summaryLabel.setText(Messages.get("mainframe.fix.errorStatus"));
                 }
             }
         };

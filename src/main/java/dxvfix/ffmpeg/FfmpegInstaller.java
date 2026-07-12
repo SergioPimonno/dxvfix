@@ -1,5 +1,7 @@
 package dxvfix.ffmpeg;
 
+import dxvfix.i18n.Messages;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,7 +50,7 @@ public final class FfmpegInstaller {
 
         Path tempZip = Files.createTempFile("ffmpeg-download", ".zip");
         try {
-            report(listener, 0, -1, "Подключение к " + DOWNLOAD_URL + "…");
+            report(listener, 0, -1, Messages.get("ffmpegInstaller.connecting", DOWNLOAD_URL));
             HttpClient client = HttpClient.newBuilder()
                     .connectTimeout(Duration.ofSeconds(20))
                     .followRedirects(HttpClient.Redirect.NORMAL)
@@ -71,18 +73,18 @@ public final class FfmpegInstaller {
                 while ((n = in.read(buf)) != -1) {
                     out.write(buf, 0, n);
                     downloaded += n;
-                    report(listener, downloaded, total, "Загрузка ffmpeg…");
+                    report(listener, downloaded, total, Messages.get("ffmpegInstaller.downloading"));
                 }
             }
 
-            report(listener, total, total, "Распаковка…");
+            report(listener, total, total, Messages.get("ffmpegInstaller.extracting"));
             Path ffmpegExe = extractOne(tempZip, targetDir, FFMPEG_EXE, "ffmpeg.exe");
             if (ffmpegExe == null) {
-                throw new IOException("Не удалось найти ffmpeg.exe внутри скачанного архива");
+                throw new IOException(Messages.get("ffmpegInstaller.exeNotFoundInArchive"));
             }
             extractOne(tempZip, targetDir, FFPROBE_EXE, "ffprobe.exe"); // best-effort, not required
 
-            report(listener, total, total, "Готово");
+            report(listener, total, total, Messages.get("ffmpegInstaller.done"));
             return ffmpegExe;
         } finally {
             Files.deleteIfExists(tempZip);

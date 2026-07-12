@@ -45,6 +45,9 @@ Resolume itself.
 - **Signed, machine-locked licensing**: the app won't start without a license file matching the
   machine's hardware fingerprint. A standalone admin tool issues licenses for other machines
   without needing to ship the signing key with the app.
+- **Language & theme**: interface available in Russian, English, German, French and Chinese
+  (Mandarin) — switch it from the Settings menu (applies on next launch). Light/dark/system theme
+  (via [FlatLaf](https://www.formdev.com/flatlaf/)) applies immediately.
 
 ## Requirements
 
@@ -65,6 +68,12 @@ The license system needs its own keypair before the app can verify licenses — 
 [Licensing](#licensing) below. `build.ps1` will warn if
 `src/main/resources/dxvfix/license/public.key` is missing.
 
+Theming depends on [FlatLaf](https://www.formdev.com/flatlaf/) (`lib/flatlaf-<version>.jar`,
+downloaded once and committed to the repo since there's no dependency manager here). `build.ps1`
+picks it up automatically and points `dxvfix.jar`'s manifest `Class-Path` at it, so when
+distributing the built app, ship the `lib/` folder alongside `dxvfix.jar` — not just the jar by
+itself.
+
 ## Usage
 
 ### Batch queue
@@ -84,6 +93,12 @@ resources.
 
 Full details of both modes, plus the difference between the verification modes and repair
 strategies, are in the app's own Справка (Help) menu.
+
+### Settings
+
+The menu's "Настройки…" (Settings) dialog picks the interface language (Russian, English, German,
+French, Chinese) and color theme (light/dark/system). Theme changes apply immediately across every
+open window; a language change takes effect the next time the app is launched.
 
 ## Licensing
 
@@ -133,6 +148,9 @@ src/main/java/dxvfix/
   queue/      Batch queue data model
   watch/      Show monitoring engine
   license/    Signed license records, verification, machine fingerprinting
+  i18n/       UI string lookup (messages_<lang>.properties)
+  settings/   Persisted language/theme preference
+  theme/      FlatLaf light/dark/system theme application
   gui/        Swing UI
 ```
 

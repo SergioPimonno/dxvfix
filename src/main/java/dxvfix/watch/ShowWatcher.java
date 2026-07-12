@@ -1,6 +1,7 @@
 package dxvfix.watch;
 
 import dxvfix.generate.FrameGenerator;
+import dxvfix.i18n.Messages;
 import dxvfix.repair.Mp4Repairer;
 import dxvfix.repair.RepairSummary;
 import dxvfix.scan.ScanEngine;
@@ -117,7 +118,8 @@ public final class ShowWatcher {
                 }
                 fixFile(wf.sourceFile, rel, scan, wf);
             } catch (Exception e) {
-                appendLog("Не удалось исправить " + rel + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                appendLog(Messages.get("watcher.log.manualFixFailed", rel,
+                        e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
             } finally {
                 wf.fixing = false;
                 listener.onFileUpdated(wf);
@@ -130,12 +132,13 @@ public final class ShowWatcher {
     }
 
     private void runLoop() {
-        listener.onLog("Сопровождение запущено: " + contentDir.getAbsolutePath());
+        listener.onLog(Messages.get("watcher.log.started", contentDir.getAbsolutePath()));
         while (running) {
             try {
                 reconcile();
             } catch (Exception e) {
-                listener.onLog("Ошибка сопровождения: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+                listener.onLog(Messages.get("watcher.log.watchError",
+                        e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
             }
             try {
                 Thread.sleep(POLL_INTERVAL_MS);
@@ -144,7 +147,7 @@ public final class ShowWatcher {
                 break;
             }
         }
-        listener.onLog("Сопровождение остановлено.");
+        listener.onLog(Messages.get("watcher.log.stopped"));
     }
 
     private void reconcile() {
@@ -181,7 +184,7 @@ public final class ShowWatcher {
     }
 
     private void processFile(File f, String rel) {
-        listener.onLog("Проверка: " + rel);
+        listener.onLog(Messages.get("watcher.log.checking", rel));
         try {
             ScanResult scan = ScanEngine.scan(f, mode, ffmpegPath, null);
             if (scan.badCount() == 0) {
@@ -196,7 +199,7 @@ public final class ShowWatcher {
             wf.detectedAt = LocalDateTime.now();
             badFiles.put(rel, wf);
             listener.onFileUpdated(wf);
-            appendLog("ОБНАРУЖЕНО: " + rel + " (" + wf.badCount + " из " + wf.totalFrames + " кадров битые)");
+            appendLog(Messages.get("watcher.log.detected", rel, wf.badCount, wf.totalFrames));
 
             // If monitoring was already run against this folder before (app restarted, or this is
             // the first pass after a fresh start), a current fix might already exist on disk --
@@ -208,7 +211,7 @@ public final class ShowWatcher {
                 wf.fixedAt = java.time.Instant.ofEpochMilli(existingFix.lastModified())
                         .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
                 listener.onFileUpdated(wf);
-                appendLog("УЖЕ ИСПРАВЛЕНО РАНЕЕ: " + rel + " -> " + existingFix.getAbsolutePath());
+                appendLog(Messages.get("watcher.log.alreadyFixed", rel, existingFix.getAbsolutePath()));
             } else if (autoFix) {
                 fixFile(f, rel, scan, wf);
             }
@@ -250,9 +253,10 @@ public final class ShowWatcher {
             wf.fixedFile = outFile;
             wf.fixedAt = LocalDateTime.now();
             listener.onFileUpdated(wf);
-            appendLog("ИСПРАВЛЕНО (" + summary.framesReplaced + " кадров): " + rel + " -> " + outFile.getAbsolutePath());
+            appendLog(Messages.get("watcher.log.fixed", summary.framesReplaced, rel, outFile.getAbsolutePath()));
         } catch (Exception e) {
-            appendLog("ОШИБКА ИСПРАВЛЕНИЯ: " + rel + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+            appendLog(Messages.get("watcher.log.fixError", rel,
+                    e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
         }
     }
 

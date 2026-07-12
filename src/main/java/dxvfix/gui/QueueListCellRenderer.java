@@ -1,5 +1,6 @@
 package dxvfix.gui;
 
+import dxvfix.i18n.Messages;
 import dxvfix.queue.QueueItem;
 
 import javax.swing.*;
@@ -82,7 +83,7 @@ final class QueueListCellRenderer extends JPanel implements ListCellRenderer<Que
         boolean removable = item.status != QueueItem.Status.SCANNING;
         closeLabel.setBackground(bg);
         closeLabel.setForeground(removable ? (isSelected ? list.getSelectionForeground() : new Color(150, 150, 150)) : bg);
-        closeLabel.setToolTipText(removable ? "Убрать из очереди" : null);
+        closeLabel.setToolTipText(removable ? Messages.get("queue.removeTooltip") : null);
         return this;
     }
 
@@ -107,15 +108,16 @@ final class QueueListCellRenderer extends JPanel implements ListCellRenderer<Que
     private static String statusText(QueueItem item) {
         switch (item.status) {
             case PENDING:
-                return "в очереди";
+                return Messages.get("queue.status.pending");
             case SCANNING:
-                return "сканирование...";
+                return Messages.get("queue.status.scanning");
             case DONE:
                 int bad = item.badCount();
-                String mode = item.lastMode == dxvfix.scan.ScanEngine.Mode.DEEP ? "углублённо" : "быстро";
-                return (bad == 0 ? "OK" : bad + " битых") + " (" + mode + ")" + (item.repaired ? ", исправлен" : "");
+                String mode = Messages.get(item.lastMode == dxvfix.scan.ScanEngine.Mode.DEEP ? "queue.status.modeDeep" : "queue.status.modeFast");
+                String badPart = bad == 0 ? Messages.get("queue.status.ok") : Messages.get("queue.status.badCount", bad);
+                return badPart + " (" + mode + ")" + (item.repaired ? Messages.get("queue.status.repairedSuffix") : "");
             case ERROR:
-                return "ошибка: " + (item.errorMessage == null ? "?" : item.errorMessage);
+                return Messages.get("queue.status.error", item.errorMessage == null ? "?" : item.errorMessage);
             default:
                 return "";
         }

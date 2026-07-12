@@ -4,13 +4,19 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $src = Join-Path $root "src\main\java"
 $resources = Join-Path $root "src\main\resources"
 $out = Join-Path $root "out"
+$lib = Join-Path $root "lib"
+
+$flatlafJar = Get-ChildItem -Path $lib -Filter "flatlaf-*.jar" -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $flatlafJar) {
+    throw "FlatLaf jar not found under lib\. Expected lib\flatlaf-<version>.jar (theming depends on it)."
+}
 
 if (Test-Path $out) { Remove-Item -Recurse -Force $out }
 New-Item -ItemType Directory -Path $out | Out-Null
 
 $sources = Get-ChildItem -Path $src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 Write-Host "Compiling $($sources.Count) source files..."
-& javac -d $out @sources
+& javac -encoding UTF-8 -cp $flatlafJar.FullName -d $out @sources
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 if (Test-Path $resources) {
@@ -34,7 +40,10 @@ if ($jarCmd) {
 }
 
 $manifest = Join-Path $out "MANIFEST.MF"
-"Main-Class: dxvfix.Main" | Out-File -FilePath $manifest -Encoding ascii
+# Class-Path is relative to dxvfix.jar's own location, so lib\ must ship alongside the jar
+# (theming via FlatLaf is loaded from there at runtime instead of being merged into the jar,
+# to avoid dealing with FlatLaf's multi-release-jar layout during packaging).
+"Main-Class: dxvfix.Main`r`nClass-Path: lib/$($flatlafJar.Name)" | Out-File -FilePath $manifest -Encoding ascii
 
 $jarPath = Join-Path $root "dxvfix.jar"
 Push-Location $out
@@ -46,4 +55,4 @@ try {
 }
 
 Write-Host "Built $jarPath"
-Write-Host "Run with: java -jar dxvfix.jar"
+Write-Host "Run with: java -jar dxvfix.jar (lib\$($flatlafJar.Name) must stay alongside it)"
