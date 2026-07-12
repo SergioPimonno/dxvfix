@@ -3,13 +3,15 @@ package dxvfix.watch;
 import dxvfix.generate.FrameGenerator;
 import dxvfix.repair.Mp4Repairer;
 import dxvfix.repair.RepairSummary;
-import dxvfix.report.ReportWriter;
 import dxvfix.scan.ScanEngine;
 import dxvfix.scan.ScanResult;
 import dxvfix.util.VideoFileFinder;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,8 +35,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ShowWatcher {
 
     public static final String FIXED_SUBFOLDER_NAME = "_DXVFrameDoctor_Fixed";
+    public static final String LOG_FILE_NAME = "watch_log.txt";
     private static final long POLL_INTERVAL_MS = 20_000;
     private static final long STABILIZE_DELAY_MS = 1500;
+    private static final DateTimeFormatter LOG_TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public interface Listener {
         void onFileUpdated(WatchedFile file);
@@ -45,6 +49,7 @@ public final class ShowWatcher {
     private final Listener listener;
     private final java.util.Map<String, String> knownSignatures = new ConcurrentHashMap<>();
     private final java.util.Map<String, WatchedFile> badFiles = new ConcurrentHashMap<>();
+    private final Set<String> fixingNow = ConcurrentHashMap.newKeySet();
 
     private volatile boolean running;
     private Thread thread;
@@ -87,6 +92,43 @@ public final class ShowWatcher {
         if (thread != null) thread.interrupt();
     }
 
+    /**
+     * Manually (re)fixes one already-detected file right now, independently of the poll loop and
+     * of the auto-fix setting — for the "Исправить" button shown per row when auto-fix is off. Runs
+     * on its own short-lived background thread so it doesn't block the UI or the watcher's own
+     * loop; guarded against firing twice concurrently for the same file (e.g. a double click).
+     */
+    public void fixNow(WatchedFile wf) {
+        if (contentDir == null) return;
+        String rel = relativePath(wf.sourceFile);
+        if (!fixingNow.add(rel)) return; // already in progress
+
+        wf.fixing = true;
+        listener.onFileUpdated(wf);
+
+        Thread t = new Thread(() -> {
+            try {
+                ScanResult scan = ScanEngine.scan(wf.sourceFile, mode, ffmpegPath, null);
+                if (scan.badCount() == 0) {
+                    badFiles.remove(rel);
+                    wf.fixing = false;
+                    listener.onFileCleared(wf.sourceFile);
+                    return;
+                }
+                fixFile(wf.sourceFile, rel, scan, wf);
+            } catch (Exception e) {
+                appendLog("Не удалось исправить " + rel + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+            } finally {
+                wf.fixing = false;
+                listener.onFileUpdated(wf);
+                fixingNow.remove(rel);
+            }
+        }, "show-watcher-manual-fix");
+        t.setDaemon(true);
+        t.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.NORM_PRIORITY - 1));
+        t.start();
+    }
+
     private void runLoop() {
         listener.onLog("Сопровождение запущено: " + contentDir.getAbsolutePath());
         while (running) {
@@ -121,6 +163,7 @@ public final class ShowWatcher {
 
             if (!isStable(f)) continue; // still being copied in; revisit next poll
             if (!running) return;
+            if (fixingNow.contains(rel)) continue; // a manual fix is in flight for this file right now
 
             knownSignatures.put(rel, sig);
             processFile(f, rel);
@@ -153,8 +196,20 @@ public final class ShowWatcher {
             wf.detectedAt = LocalDateTime.now();
             badFiles.put(rel, wf);
             listener.onFileUpdated(wf);
+            appendLog("ОБНАРУЖЕНО: " + rel + " (" + wf.badCount + " из " + wf.totalFrames + " кадров битые)");
 
-            if (autoFix) {
+            // If monitoring was already run against this folder before (app restarted, or this is
+            // the first pass after a fresh start), a current fix might already exist on disk --
+            // reuse it instead of redoing the (possibly expensive, with Generate strategy) repair.
+            File existingFix = findExistingCurrentFix(f, rel);
+            if (existingFix != null) {
+                wf.fixed = true;
+                wf.fixedFile = existingFix;
+                wf.fixedAt = java.time.Instant.ofEpochMilli(existingFix.lastModified())
+                        .atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+                listener.onFileUpdated(wf);
+                appendLog("УЖЕ ИСПРАВЛЕНО РАНЕЕ: " + rel + " -> " + existingFix.getAbsolutePath());
+            } else if (autoFix) {
                 fixFile(f, rel, scan, wf);
             }
         } catch (Exception e) {
@@ -164,6 +219,20 @@ public final class ShowWatcher {
             badFiles.put(rel, wf);
             listener.onFileUpdated(wf);
         }
+    }
+
+    /**
+     * A fix in {@link #FIXED_SUBFOLDER_NAME} counts as "current" if it was written at or after the
+     * source's last modification time -- i.e. nothing has touched the source since it was fixed.
+     * If the source was replaced with a newer file after that, the old fix is stale and this
+     * returns null so the file gets a fresh scan/fix.
+     */
+    private File findExistingCurrentFix(File source, String rel) {
+        File candidate = new File(new File(contentDir, FIXED_SUBFOLDER_NAME), rel);
+        if (candidate.isFile() && candidate.lastModified() >= source.lastModified()) {
+            return candidate;
+        }
+        return null;
     }
 
     private void fixFile(File source, String rel, ScanResult scan, WatchedFile wf) {
@@ -176,17 +245,35 @@ public final class ShowWatcher {
             if (parent != null) parent.mkdirs();
 
             RepairSummary summary = Mp4Repairer.repair(source, scan, outFile);
-            File report = new File(parent, stripExt(outFile.getName()) + "_report.txt");
-            ReportWriter.write(report, source, scan, true);
 
             wf.fixed = true;
             wf.fixedFile = outFile;
             wf.fixedAt = LocalDateTime.now();
             listener.onFileUpdated(wf);
-            listener.onLog("Исправлено (" + summary.framesReplaced + " кадров): " + rel + " -> " + outFile.getAbsolutePath());
+            appendLog("ИСПРАВЛЕНО (" + summary.framesReplaced + " кадров): " + rel + " -> " + outFile.getAbsolutePath());
         } catch (Exception e) {
-            listener.onLog("Не удалось исправить " + rel + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
+            appendLog("ОШИБКА ИСПРАВЛЕНИЯ: " + rel + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
         }
+    }
+
+    /**
+     * A single running log of every detection/fix event, appended to across the life of the
+     * watched folder (including across app restarts) -- deliberately not one report file per
+     * fixed video, which would otherwise clutter {@link #FIXED_SUBFOLDER_NAME} with as many report
+     * files as there are repaired videos.
+     */
+    private void appendLog(String message) {
+        try {
+            File fixedDir = new File(contentDir, FIXED_SUBFOLDER_NAME);
+            fixedDir.mkdirs();
+            File logFile = new File(fixedDir, LOG_FILE_NAME);
+            String line = "[" + LocalDateTime.now().format(LOG_TIME_FMT) + "] " + message + System.lineSeparator();
+            Files.writeString(logFile.toPath(), line, java.nio.charset.StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (Exception ignored) {
+            // Logging is best-effort; never let it break the actual scan/fix flow.
+        }
+        listener.onLog(message);
     }
 
     private boolean isStable(File f) {
@@ -208,10 +295,5 @@ public final class ShowWatcher {
 
     private static String signature(File f) {
         return f.length() + ":" + f.lastModified();
-    }
-
-    private static String stripExt(String name) {
-        int dot = name.lastIndexOf('.');
-        return dot > 0 ? name.substring(0, dot) : name;
     }
 }

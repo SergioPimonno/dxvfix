@@ -10,7 +10,8 @@ import java.util.List;
 
 final class WatchTableModel extends AbstractTableModel {
 
-    private static final String[] COLUMNS = {"Файл", "Битых кадров", "Обнаружено", "Исправлено"};
+    private static final String[] COLUMNS = {"Файл", "Битых кадров", "Обнаружено", "Исправлено", "Действие"};
+    static final int ACTION_COLUMN = 4;
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     private final List<WatchedFile> rows = new ArrayList<>();
@@ -52,6 +53,10 @@ final class WatchTableModel extends AbstractTableModel {
         return rows.size();
     }
 
+    WatchedFile getRow(int index) {
+        return rows.get(index);
+    }
+
     @Override
     public int getRowCount() {
         return rows.size();
@@ -68,6 +73,11 @@ final class WatchTableModel extends AbstractTableModel {
     }
 
     @Override
+    public boolean isCellEditable(int row, int col) {
+        return col == ACTION_COLUMN;
+    }
+
+    @Override
     public Object getValueAt(int r, int c) {
         WatchedFile wf = rows.get(r);
         switch (c) {
@@ -79,6 +89,8 @@ final class WatchTableModel extends AbstractTableModel {
                 return wf.detectedAt == null ? "" : wf.detectedAt.format(TIME_FMT);
             case 3:
                 return wf.fixed ? ("да, " + wf.fixedAt.format(TIME_FMT)) : "-";
+            case ACTION_COLUMN:
+                return wf;
             default:
                 return "";
         }

@@ -143,7 +143,15 @@ final class ShowWatchPanel extends JPanel {
 
         JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setBorder(new TitledBorder("Повреждённые файлы"));
-        table.setAutoCreateRowSorter(true);
+
+        javax.swing.table.TableRowSorter<WatchTableModel> sorter = new javax.swing.table.TableRowSorter<>(tableModel);
+        sorter.setSortable(WatchTableModel.ACTION_COLUMN, false); // column holds a WatchedFile, not sortable text
+        table.setRowSorter(sorter);
+
+        WatchFixButtonCell fixButtonCell = new WatchFixButtonCell(this::onManualFixRequested);
+        table.getColumnModel().getColumn(WatchTableModel.ACTION_COLUMN).setCellRenderer(fixButtonCell);
+        table.getColumnModel().getColumn(WatchTableModel.ACTION_COLUMN).setCellEditor(fixButtonCell);
+
         split.setTopComponent(tableScroll);
 
         log.setEditable(false);
@@ -219,6 +227,10 @@ final class ShowWatchPanel extends JPanel {
         startStopBtn.setText("Остановить сопровождение");
         statusLabel.setText("Активно | отслеживается битых файлов: 0");
         setControlsEnabledWhileEditable(false);
+    }
+
+    private void onManualFixRequested(WatchedFile wf) {
+        watcher.fixNow(wf);
     }
 
     private void onStopped() {

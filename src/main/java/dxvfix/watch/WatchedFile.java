@@ -10,6 +10,7 @@ public final class WatchedFile {
     public int totalFrames;
     public LocalDateTime detectedAt;
     public boolean fixed;
+    public volatile boolean fixing;
     public File fixedFile;
     public LocalDateTime fixedAt;
     public String errorMessage;
