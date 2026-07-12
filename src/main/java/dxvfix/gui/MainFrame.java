@@ -69,7 +69,11 @@ public final class MainFrame extends JFrame {
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildQueuePanel(), buildDetailPanel());
         split.setDividerLocation(280);
         installProportionalDividerHandling(split);
-        add(split, BorderLayout.CENTER);
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.addTab("Пакетная проверка", split);
+        tabs.addTab("Сопровождение шоу", new ShowWatchPanel());
+        add(tabs, BorderLayout.CENTER);
 
         installDragAndDrop();
         wireActions();
@@ -390,8 +394,6 @@ public final class MainFrame extends JFrame {
         worker.execute();
     }
 
-    private static final java.util.Set<String> VIDEO_EXTENSIONS = java.util.Set.of("mov", "mp4");
-
     /**
      * Accepts a mix of files and folders (as dropped or picked via the file chooser). Folders are
      * walked recursively (in the background, since a dropped folder could be large) to collect
@@ -411,7 +413,7 @@ public final class MainFrame extends JFrame {
                 List<File> collected = new ArrayList<>();
                 for (File f : dropped) {
                     if (f.isDirectory()) {
-                        collectVideoFiles(f, collected);
+                        collected.addAll(dxvfix.util.VideoFileFinder.find(f));
                     } else {
                         collected.add(f);
                     }
@@ -432,23 +434,6 @@ public final class MainFrame extends JFrame {
             }
         };
         worker.execute();
-    }
-
-    private static void collectVideoFiles(File dir, List<File> out) {
-        File[] children = dir.listFiles();
-        if (children == null) return;
-        java.util.Arrays.sort(children);
-        for (File c : children) {
-            if (c.isDirectory()) {
-                collectVideoFiles(c, out);
-            } else {
-                String name = c.getName().toLowerCase(java.util.Locale.ROOT);
-                int dot = name.lastIndexOf('.');
-                if (dot >= 0 && VIDEO_EXTENSIONS.contains(name.substring(dot + 1))) {
-                    out.add(c);
-                }
-            }
-        }
     }
 
     private void addFiles(List<File> files) {
