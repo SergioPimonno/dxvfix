@@ -78,6 +78,7 @@ public final class MainFrame extends JFrame {
         tabs.addTab(Messages.get("mainframe.tab.queue"), split);
         tabs.addTab(Messages.get("mainframe.tab.showWatch"), new ShowWatchPanel());
         add(tabs, BorderLayout.CENTER);
+        add(new SystemMonitorPanel(), BorderLayout.SOUTH);
 
         installDragAndDrop();
         wireActions();
