@@ -142,12 +142,19 @@ public final class MainFrame extends JFrame {
         help.addActionListener(e -> HelpDialog.show(this));
         JMenuItem reportBug = new JMenuItem(Messages.get("mainframe.menu.reportBug"));
         reportBug.addActionListener(e -> openReportBugPage());
+        JMenuItem about = new JMenuItem(Messages.get("mainframe.menu.about"));
+        about.addActionListener(e -> AboutDialog.show(this));
+        JMenuItem changelog = new JMenuItem(Messages.get("mainframe.menu.changelog"));
+        changelog.addActionListener(e -> ChangelogDialog.show(this));
         menu.add(checkLicense);
         menu.add(settings);
         menu.add(privacyNotice);
         menu.addSeparator();
         menu.add(help);
         menu.add(reportBug);
+        menu.addSeparator();
+        menu.add(about);
+        menu.add(changelog);
         bar.add(menu);
         return bar;
     }
