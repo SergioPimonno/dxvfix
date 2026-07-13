@@ -54,8 +54,17 @@ final class HelpDialog {
         JOptionPane.showMessageDialog(parent, split, Messages.get("help.dialogTitle"), JOptionPane.PLAIN_MESSAGE);
     }
 
+    /**
+     * Reads the point size straight from the live "defaultFont" UI default rather than a fixed
+     * {@code font-size} value -- JEditorPane's HTML/CSS engine doesn't pick up UI scale changes on
+     * its own (unlike plain Swing components, which {@code ThemeManager} keeps in sync via
+     * {@code SwingUtilities.updateComponentTreeUI}), so a hardcoded size here would leave Help text
+     * stuck at its startup size even after the user bumps the interface scale in Settings.
+     */
     private static String wrap(String body) {
-        return "<html><body style='font-family: sans-serif; font-size: 10pt;'>" + body + "</body></html>";
+        Font defaultFont = UIManager.getFont("defaultFont");
+        int fontSize = defaultFont != null ? Math.round(defaultFont.getSize2D()) : 12;
+        return "<html><body style='font-family: sans-serif; font-size: " + fontSize + "pt;'>" + body + "</body></html>";
     }
 
     private static Map<String, String> loadTopics() {

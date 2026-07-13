@@ -6,6 +6,7 @@ import dxvfix.settings.AppSettings;
 import javax.swing.*;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 
 /**
  * "Changelog" screen: functionality grouped by major version (v1, v2, ...), reached from the menu
@@ -28,8 +29,12 @@ final class ChangelogDialog {
         JOptionPane.showMessageDialog(parent, scroll, Messages.get("mainframe.menu.changelog"), JOptionPane.PLAIN_MESSAGE);
     }
 
+    /** See {@code HelpDialog.wrap} for why this reads the live default font size instead of a
+     * fixed value -- JEditorPane's HTML/CSS engine doesn't track UI scale changes on its own. */
     private static String wrap(String body) {
-        return "<html><body style='font-family: sans-serif; font-size: 10pt;'>" + body + "</body></html>";
+        Font defaultFont = UIManager.getFont("defaultFont");
+        int fontSize = defaultFont != null ? Math.round(defaultFont.getSize2D()) : 12;
+        return "<html><body style='font-family: sans-serif; font-size: " + fontSize + "pt;'>" + body + "</body></html>";
     }
 
     private static String changelogHtml() {
