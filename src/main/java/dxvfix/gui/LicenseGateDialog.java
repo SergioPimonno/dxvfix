@@ -55,9 +55,11 @@ public final class LicenseGateDialog extends JDialog {
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setForeground(new Color(180, 40, 40));
 
+        JButton requestBtn = new JButton(Messages.get("licenseGate.requestLicense"));
         JButton loadBtn = new JButton(Messages.get("licenseGate.loadFile"));
         JButton exitBtn = new JButton(Messages.get("licenseGate.exit"));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttons.add(requestBtn);
         buttons.add(loadBtn);
         buttons.add(exitBtn);
 
@@ -87,6 +89,7 @@ public final class LicenseGateDialog extends JDialog {
             }
         });
         exitBtn.addActionListener(e -> dispose());
+        requestBtn.addActionListener(e -> LicenseRequestDialog.show(this, finalFingerprint));
 
         setContentPane(content);
         setPreferredSize(new Dimension(560, 260));

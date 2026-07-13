@@ -134,12 +134,17 @@ public final class MainFrame extends JFrame {
         checkLicense.addActionListener(e -> showLicenseStatus());
         JMenuItem settings = new JMenuItem(Messages.get("mainframe.menu.settings"));
         settings.addActionListener(e -> SettingsDialog.show(this));
+        JMenuItem privacyNotice = new JMenuItem(Messages.get("mainframe.menu.privacyNotice"));
+        privacyNotice.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                Messages.get("mainframe.privacyNotice.text"), Messages.get("mainframe.menu.privacyNotice"),
+                JOptionPane.INFORMATION_MESSAGE));
         JMenuItem help = new JMenuItem(Messages.get("mainframe.menu.help"));
         help.addActionListener(e -> HelpDialog.show(this));
         JMenuItem reportBug = new JMenuItem(Messages.get("mainframe.menu.reportBug"));
         reportBug.addActionListener(e -> openReportBugPage());
         menu.add(checkLicense);
         menu.add(settings);
+        menu.add(privacyNotice);
         menu.addSeparator();
         menu.add(help);
         menu.add(reportBug);
