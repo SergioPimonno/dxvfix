@@ -8,10 +8,10 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Interface language + color theme picker, reached from the menu bar. Theme applies immediately
- * (swaps the FlatLaf look and feel live across every open window); language only takes effect on
- * next launch -- see {@link Messages}, which resolves the active bundle once at class-init rather
- * than watching for changes.
+ * Interface language, color theme and UI scale picker, reached from the menu bar. Theme and scale
+ * apply immediately (swaps the FlatLaf look and feel / default font size live across every open
+ * window -- see {@link ThemeManager}); language only takes effect on next launch -- see {@link
+ * Messages}, which resolves the active bundle once at class-init rather than watching for changes.
  */
 final class SettingsDialog {
 
@@ -43,6 +43,11 @@ final class SettingsDialog {
             case SYSTEM -> systemRadio.setSelected(true);
         }
 
+        JComboBox<Integer> scaleBox = new JComboBox<>(AppSettings.SUPPORTED_UI_SCALES.toArray(new Integer[0]));
+        scaleBox.setRenderer((list, value, index, isSelected, cellHasFocus) ->
+                new JLabel(value == null ? "" : value + "%"));
+        scaleBox.setSelectedItem(AppSettings.getUiScalePercent());
+
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
@@ -64,6 +69,14 @@ final class SettingsDialog {
         panel.add(darkRadio);
         panel.add(systemRadio);
 
+        panel.add(Box.createVerticalStrut(12));
+
+        JPanel scaleRow = new JPanel(new BorderLayout(6, 6));
+        scaleRow.add(new JLabel(Messages.get("settings.uiScale")), BorderLayout.WEST);
+        scaleRow.add(scaleBox, BorderLayout.CENTER);
+        scaleRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.add(scaleRow);
+
         panel.setPreferredSize(new Dimension(320, panel.getPreferredSize().height));
 
         int result = JOptionPane.showConfirmDialog(parent, panel, Messages.get("settings.title"),
@@ -73,13 +86,15 @@ final class SettingsDialog {
         AppSettings.Language selectedLanguage = (AppSettings.Language) languageBox.getSelectedItem();
         AppSettings.Theme selectedTheme = lightRadio.isSelected() ? AppSettings.Theme.LIGHT
                 : darkRadio.isSelected() ? AppSettings.Theme.DARK : AppSettings.Theme.SYSTEM;
+        int selectedScale = (Integer) scaleBox.getSelectedItem();
 
         boolean languageChanged = selectedLanguage != null && !selectedLanguage.code().equals(currentLangCode);
         if (selectedLanguage != null) {
             AppSettings.setLanguageCode(selectedLanguage.code());
         }
         AppSettings.setTheme(selectedTheme);
-        ThemeManager.applyLive(selectedTheme);
+        AppSettings.setUiScalePercent(selectedScale);
+        ThemeManager.applyLive(selectedTheme, selectedScale);
 
         if (languageChanged) {
             JOptionPane.showMessageDialog(parent, Messages.get("settings.restartRequired"),

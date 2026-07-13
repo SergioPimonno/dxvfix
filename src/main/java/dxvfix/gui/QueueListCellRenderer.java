@@ -34,7 +34,18 @@ import java.awt.*;
  */
 final class QueueListCellRenderer extends JPanel implements ListCellRenderer<QueueItem> {
 
-    static final int CLOSE_ZONE_WIDTH = 26;
+    /**
+     * Width of the close-button hit zone, in pixels. Not {@code final} -- this cell renderer is
+     * constructed once at startup and never revisited by {@code SwingUtilities.updateComponentTreeUI}
+     * (it's a transient renderer, not a permanent member of the component tree), so a live UI
+     * scale change (see {@code SettingsDialog}) can only reach it by recomputing this value on
+     * every render pass, in {@link #getListCellRendererComponent}. {@code MainFrame}'s close-button
+     * click hit-test reads whatever this held after the most recent render, which is always
+     * current by the time a real mouse click can happen.
+     */
+    static int CLOSE_ZONE_WIDTH = 26;
+    private static final int BASE_CLOSE_ZONE_WIDTH = 26;
+    private static final float BASE_FONT_SIZE = 12f;
     private static final int CAPPED_PREFERRED_WIDTH = 200;
     private static final int RIGHT_PADDING = 6;
 
@@ -50,7 +61,6 @@ final class QueueListCellRenderer extends JPanel implements ListCellRenderer<Que
 
         closeLabel.setOpaque(true);
         closeLabel.setPreferredSize(new Dimension(CLOSE_ZONE_WIDTH, 10));
-        closeLabel.setFont(closeLabel.getFont().deriveFont(Font.BOLD, 12f));
 
         add(textLabel, BorderLayout.CENTER);
         add(closeLabel, BorderLayout.EAST);
@@ -65,6 +75,17 @@ final class QueueListCellRenderer extends JPanel implements ListCellRenderer<Que
     @Override
     public Component getListCellRendererComponent(JList<? extends QueueItem> list, QueueItem item, int index,
                                                     boolean isSelected, boolean cellHasFocus) {
+        // Re-sync fonts from the live list on every render: this renderer is constructed once at
+        // startup and isn't reached by updateComponentTreeUI, so a live UI scale change (see
+        // ThemeManager) would otherwise leave this row's text stuck at its startup size forever.
+        Font baseFont = list.getFont();
+        textLabel.setFont(baseFont);
+        Font closeFont = baseFont.deriveFont(Font.BOLD, baseFont.getSize2D() + 1f);
+        closeLabel.setFont(closeFont);
+        float scale = baseFont.getSize2D() / BASE_FONT_SIZE;
+        CLOSE_ZONE_WIDTH = Math.round(BASE_CLOSE_ZONE_WIDTH * scale);
+        closeLabel.setPreferredSize(new Dimension(CLOSE_ZONE_WIDTH, closeLabel.getFontMetrics(closeFont).getHeight() + 4));
+
         int rowWidth = list.getWidth() > 0 ? list.getWidth() : CAPPED_PREFERRED_WIDTH;
         int availableForText = rowWidth - CLOSE_ZONE_WIDTH - RIGHT_PADDING - 12;
 

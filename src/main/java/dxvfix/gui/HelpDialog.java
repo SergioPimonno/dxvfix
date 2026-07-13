@@ -190,9 +190,13 @@ final class HelpDialog {
 
         t.put("Настройки", """
                 <h2>Настройки</h2>
-                <p>Пункт «Настройки…» в меню открывает выбор языка интерфейса и цветовой темы.</p>
+                <p>Пункт «Настройки…» в меню открывает выбор языка интерфейса, цветовой темы и масштаба \
+                интерфейса.</p>
                 <p><b>Тема</b> (светлая/тёмная/системная) применяется сразу же. «Системная» подстраивается под \
                 текущий режим Windows (светлый/тёмный) на момент применения.</p>
+                <p><b>Масштаб интерфейса</b> (100–200%) увеличивает шрифты, иконки и элементы управления по всему \
+                приложению — полезно, если стандартный размер неудобен для чтения. Применяется сразу же, без \
+                перезапуска.</p>
                 <p><b>Язык</b> применяется после перезапуска программы — при смене языка появится соответствующее \
                 напоминание.</p>""");
 
@@ -321,9 +325,11 @@ final class HelpDialog {
 
         t.put("Settings", """
                 <h2>Settings</h2>
-                <p>"Settings…" in the menu opens the interface language and color theme choices.</p>
+                <p>"Settings…" in the menu opens the interface language, color theme and UI scale choices.</p>
                 <p>The <b>theme</b> (light/dark/system) applies immediately. "System" follows Windows' current \
                 light/dark mode at the moment it's applied.</p>
+                <p>The <b>interface scale</b> (100–200%) enlarges fonts, icons and controls throughout the app — \
+                useful if the default size is hard to read. Applies immediately, no restart needed.</p>
                 <p>The <b>language</b> applies after restarting the app — you'll see a reminder to that effect \
                 when you change it.</p>""");
 
@@ -465,9 +471,13 @@ final class HelpDialog {
 
         t.put("Einstellungen", """
                 <h2>Einstellungen</h2>
-                <p>"Einstellungen…" im Menü öffnet die Auswahl von Oberflächensprache und Farbschema.</p>
+                <p>"Einstellungen…" im Menü öffnet die Auswahl von Oberflächensprache, Farbschema und \
+                Oberflächenskalierung.</p>
                 <p>Das <b>Farbschema</b> (hell/dunkel/systemweit) wird sofort angewendet. "Systemweit" richtet \
                 sich nach dem aktuellen Windows-Modus (hell/dunkel) zum Zeitpunkt der Anwendung.</p>
+                <p>Die <b>Oberflächenskalierung</b> (100–200 %) vergrößert Schriften, Symbole und \
+                Bedienelemente in der gesamten Anwendung — nützlich, wenn die Standardgröße schwer lesbar ist. \
+                Wird sofort angewendet, kein Neustart nötig.</p>
                 <p>Die <b>Sprache</b> wird nach einem Neustart der Anwendung wirksam — beim Wechseln erscheint \
                 ein entsprechender Hinweis.</p>""");
 
@@ -611,10 +621,13 @@ final class HelpDialog {
 
         t.put("Paramètres", """
                 <h2>Paramètres</h2>
-                <p>« Paramètres… » dans le menu ouvre le choix de la langue de l'interface et du thème de \
-                couleurs.</p>
+                <p>« Paramètres… » dans le menu ouvre le choix de la langue de l'interface, du thème de \
+                couleurs et de l'échelle de l'interface.</p>
                 <p>Le <b>thème</b> (clair/sombre/système) s'applique immédiatement. « Système » suit le mode \
                 clair/sombre actuel de Windows au moment de l'application.</p>
+                <p>L'<b>échelle de l'interface</b> (100–200 %) agrandit les polices, icônes et contrôles dans \
+                toute l'application — utile si la taille par défaut est difficile à lire. S'applique \
+                immédiatement, sans redémarrage.</p>
                 <p>La <b>langue</b> s'applique après le redémarrage de l'application — un rappel s'affiche lors \
                 du changement.</p>""");
 
@@ -724,9 +737,11 @@ final class HelpDialog {
 
         t.put("设置", """
                 <h2>设置</h2>
-                <p>菜单中的“设置…”可打开界面语言和配色主题的选择。</p>
+                <p>菜单中的“设置…”可打开界面语言、配色主题和界面缩放的选择。</p>
                 <p><b>主题</b>（浅色/深色/跟随系统）会立即生效。“跟随系统”会在应用时读取当前 Windows 的浅色/深色\
                 模式。</p>
+                <p><b>界面缩放</b>（100%–200%）会放大整个程序中的字体、图标和控件——如果默认大小不便阅读会很有帮\
+                助。立即生效，无需重启。</p>
                 <p><b>语言</b>在重启程序后生效——更改语言时会显示相应的提示。</p>""");
 
         return t;

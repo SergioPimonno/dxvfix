@@ -48,6 +48,10 @@ final class WatchFixButtonCell extends AbstractCellEditor implements TableCellRe
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                                                      boolean hasFocus, int row, int column) {
         WatchedFile wf = (WatchedFile) value;
+        // Re-sync the font from the live table on every render: this cell is constructed once at
+        // startup and isn't reached by updateComponentTreeUI, so a live UI scale change (see
+        // ThemeManager) would otherwise leave this button stuck at its startup size forever.
+        renderButton.setFont(table.getFont());
         renderButton.setText(labelFor(wf));
         renderButton.setEnabled(isActionable(wf));
         return renderButton;
@@ -56,6 +60,7 @@ final class WatchFixButtonCell extends AbstractCellEditor implements TableCellRe
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         editingRow = (WatchedFile) value;
+        editButton.setFont(table.getFont());
         editButton.setText(labelFor(editingRow));
         editButton.setEnabled(isActionable(editingRow));
         return editButton;
