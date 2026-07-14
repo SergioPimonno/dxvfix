@@ -108,9 +108,11 @@ final class SystemMonitorPanel extends JPanel {
      * Windows has no single "GPU usage" counter comparable to Task Manager's own (its exact
      * aggregation algorithm isn't public); this sums the "Utilization Percentage" of every "GPU
      * Engine" instance as a reasonable approximation, clamped to 100 since a busy GPU can report
-     * several simultaneously-active engines each near 100%.
+     * several simultaneously-active engines each near 100%. {@code typeperf} itself is
+     * Windows-only, so this is skipped entirely elsewhere -- the GPU readout just shows "--" there.
      */
     private Integer readGpuPercent() {
+        if (!dxvfix.util.Platform.WINDOWS) return null;
         try {
             Process p = new ProcessBuilder("typeperf", "-sc", "1", "\\GPU Engine(*)\\Utilization Percentage")
                     .redirectErrorStream(true).start();

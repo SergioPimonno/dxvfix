@@ -148,6 +148,13 @@ final class HelpDialog {
                 <li>Папка (включая все вложенные подпапки) периодически перепроверяется целиком. Новые и \
                 изменившиеся файлы проверяются автоматически; файл, который ещё копируется, распознаётся по \
                 меняющемуся размеру и не трогается, пока не «устаканится».</li>
+                <li>Скрытые папки/файлы и файлы, не относящиеся к видео (не .mov/.mp4), в проверку не попадают.</li>
+                <li>Если файл имеет контейнер .mov, но закодирован кодеком, который программа не умеет проверять \
+                (например, HAP), это отражается в статусе ошибкой вида «другой кодек - …», а не тихо считается \
+                исправным.</li>
+                <li>В нижней части главного окна отображается общий прогресс проверки всего содержимого папки \
+                (сколько файлов уже проверено из общего числа) с индикатором «все проверены», когда новых или ещё \
+                не проверенных файлов не осталось.</li>
                 <li>Найденные битые файлы появляются в таблице снизу: путь, число битых кадров, время обнаружения.</li>
                 <li>Если файл убрали из папки шоу — он пропадает и из таблицы.</li>
                 <li>Журнал внизу показывает, что программа делает прямо сейчас — все события (обнаружение, починка) \
@@ -173,8 +180,11 @@ final class HelpDialog {
                 для справки.</p>
 
                 <h3>Нагрузка на систему</h3>
-                <p>Режим специально сделан, чтобы не мешать Resolume Arena, работающей на той же машине: файлы \
-                обрабатываются строго по одному, не параллельно, фоновый поток запущен с пониженным приоритетом. \
+                <p>Режим специально сделан, чтобы не мешать Resolume Arena, работающей на той же машине. Несколько \
+                файлов могут проверяться параллельно — ползунок «Параллельных проверок» на этой вкладке \
+                ограничивает их количество не более чем половиной доступных ядер процессора; каждый фоновый поток \
+                (как и поток самого сопровождения) запущен с пониженным приоритетом, поэтому даже на максимуме \
+                ползунка программа не конкурирует с Arena за процессор. \
                 При быстрой проверке с дублированием нагрузка на процессор практически нулевая (это подтверждено \
                 замерами — узкое место там дисковое чтение, а не вычисления). Углублённая проверка и генерация \
                 кадров через ffmpeg заметно тяжелее (создают кратковременные всплески нагрузки на несколько секунд \
@@ -185,9 +195,10 @@ final class HelpDialog {
                 <h2>ffmpeg</h2>
                 <p>Нужен для углублённой проверки и генерации кадров (в обоих режимах — и в очереди, и в \
                 сопровождении шоу). Без ffmpeg доступны только быстрая проверка и дублирование.</p>
-                <p>Кнопка «ffmpeg…» — указать существующий ffmpeg.exe вручную. Кнопка «Скачать и установить \
-                ffmpeg…» — скачивает официальную сборку для Windows и устанавливает локально, если ffmpeg не \
-                найден на компьютере.</p>""");
+                <p>Кнопка «ffmpeg…» — указать существующий ffmpeg вручную. Кнопка «Скачать и установить ffmpeg…» \
+                доступна только в Windows-версии — она скачивает официальную сборку для Windows и устанавливает \
+                локально, если ffmpeg не найден на компьютере. В версии для macOS этой кнопки нет — установите \
+                ffmpeg через Homebrew (<code>brew install ffmpeg</code>), и программа найдёт его автоматически.</p>""");
 
         t.put("Лицензия", """
                 <h2>Лицензия</h2>
@@ -217,9 +228,11 @@ final class HelpDialog {
                 <p>Пункт «Обновить версию…» в меню показывает список версий, доступных для скачивания, — этот \
                 список программа получает из интернета при каждом открытии окна обновления, поэтому нужно \
                 подключение к сети.</p>
-                <p>После выбора версии и нажатия «Обновить» программа скачивает файл новой версии, а затем \
-                автоматически перезапускается, чтобы применить обновление — сохранять и закрывать вручную ничего \
-                не нужно, но стоит закончить текущую работу с очередью или сопровождением шоу перед обновлением.</p>
+                <p>После выбора версии и нажатия «Обновить» программа скачивает архив с полным комплектом файлов \
+                новой версии — тот, что собран именно под вашу операционную систему (Windows или macOS), — \
+                заменяет им все используемые программой файлы и автоматически перезапускается, чтобы применить \
+                обновление. Сохранять и закрывать вручную ничего не нужно, но стоит закончить текущую работу с \
+                очередью или сопровождением шоу перед обновлением.</p>
                 <p>Если версия, которую вы ожидали увидеть, отсутствует в списке — она ещё не опубликована как \
                 доступная для скачивания; список пуст или недоступен без интернета.</p>""");
 
@@ -297,6 +310,12 @@ final class HelpDialog {
                 <li>The folder (including every nested subfolder) is periodically re-walked in full. New and \
                 changed files are checked automatically; a file still being copied in is recognized by its \
                 changing size and left alone until it settles.</li>
+                <li>Hidden folders/files and files that aren't video (not .mov/.mp4) are skipped entirely.</li>
+                <li>If a file has a .mov container but is encoded with a codec this app can't check (e.g. HAP), \
+                that shows up as a "different codec - …" error status rather than being silently treated as fine.</li>
+                <li>The bottom of the main window shows overall progress across the whole folder's content \
+                (how many files have been checked out of the total), with an "all checked" indicator once nothing \
+                new or unchecked is left.</li>
                 <li>Corrupted files found show up in the table below: path, number of bad frames, detection time.</li>
                 <li>If a file is removed from the show folder, it also disappears from the table.</li>
                 <li>The log at the bottom shows what the app is doing right now — every event (detection, fix) is \
@@ -322,8 +341,10 @@ final class HelpDialog {
 
                 <h3>System load</h3>
                 <p>This mode is deliberately built not to interfere with Resolume Arena running on the same \
-                machine: files are processed strictly one at a time, never in parallel, and the background thread \
-                runs at reduced priority. With fast check + duplication, CPU load is practically zero (confirmed by \
+                machine. Multiple files can be checked in parallel — the "Parallel checks" slider on this tab caps \
+                that at no more than half the available CPU cores; every background worker thread (like the \
+                monitoring thread itself) runs at reduced priority, so even at the slider's maximum the app doesn't \
+                compete with Arena for CPU. With fast check + duplication, CPU load is practically zero (confirmed by \
                 measurement — the bottleneck there is disk reads, not computation). Deep check and frame generation \
                 via ffmpeg are noticeably heavier (they create brief load spikes lasting a few seconds for each new \
                 corrupted file), so for real-time monitoring it's best to stick with fast check + duplication, and \
@@ -333,9 +354,11 @@ final class HelpDialog {
                 <h2>ffmpeg</h2>
                 <p>Needed for deep checking and frame generation (in both modes — the queue and show monitoring). \
                 Without ffmpeg, only fast check and duplication are available.</p>
-                <p>The "ffmpeg…" button lets you point at an existing ffmpeg.exe by hand. "Download and install \
-                ffmpeg…" downloads the official Windows build and installs it locally if ffmpeg isn't found on the \
-                computer.</p>""");
+                <p>The "ffmpeg…" button lets you point at an existing ffmpeg by hand. "Download and install \
+                ffmpeg…" is only available in the Windows build — it downloads the official Windows build and \
+                installs it locally if ffmpeg isn't found on the computer. The macOS build doesn't have this \
+                button — install ffmpeg via Homebrew (<code>brew install ffmpeg</code>) and the app will find it \
+                automatically.</p>""");
 
         t.put("License", """
                 <h2>License</h2>
@@ -350,7 +373,7 @@ final class HelpDialog {
         t.put("Settings", """
                 <h2>Settings</h2>
                 <p>"Settings…" in the menu opens the interface language, color theme and UI scale choices.</p>
-                <p>The <b>theme</b> (light/dark/system) applies immediately. "System" follows Windows' current \
+                <p>The <b>theme</b> (light/dark/system) applies immediately. "System" follows the OS's current \
                 light/dark mode at the moment it's applied.</p>
                 <p>The <b>interface scale</b> (100–200%) enlarges fonts, icons and controls throughout the app — \
                 useful if the default size is hard to read. Applies immediately, no restart needed.</p>
@@ -362,9 +385,11 @@ final class HelpDialog {
                 <p>"Update version…" in the menu shows the list of versions available for download — the app \
                 fetches this list from the internet each time the update window opens, so it needs a network \
                 connection.</p>
-                <p>After picking a version and clicking "Update", the app downloads the new version's file and \
-                then restarts itself automatically to apply it — nothing needs to be saved or closed by hand, but \
-                it's worth finishing whatever you're doing with the queue or show monitoring before updating.</p>
+                <p>After picking a version and clicking "Update", the app downloads a full package of that \
+                version's files — the one built for your operating system (Windows or macOS) — replaces every \
+                file the app uses with it, and restarts itself automatically to apply it. Nothing needs to be saved \
+                or closed by hand, but it's worth finishing whatever you're doing with the queue or show monitoring \
+                before updating.</p>
                 <p>If the version you expected isn't in the list, it hasn't been published as available for \
                 download yet; the list will also be empty or unavailable without an internet connection.</p>""");
 
@@ -448,6 +473,14 @@ final class HelpDialog {
                 <li>Der Ordner (inklusive aller Unterordner) wird periodisch vollständig neu durchsucht. Neue und \
                 geänderte Dateien werden automatisch geprüft; eine noch kopierende Datei wird an ihrer sich \
                 ändernden Größe erkannt und erst angefasst, wenn sie sich nicht mehr ändert.</li>
+                <li>Versteckte Ordner/Dateien und Dateien, die keine Videos sind (nicht .mov/.mp4), werden komplett \
+                übersprungen.</li>
+                <li>Hat eine Datei einen .mov-Container, ist aber mit einem Codec kodiert, den diese Anwendung \
+                nicht prüfen kann (z. B. HAP), erscheint dafür der Fehlerstatus "anderer Codec - …" statt sie \
+                stillschweigend als in Ordnung zu behandeln.</li>
+                <li>Am unteren Rand des Hauptfensters wird der Gesamtfortschritt über den gesamten Ordnerinhalt \
+                angezeigt (wie viele Dateien von der Gesamtzahl bereits geprüft wurden), mit einer Anzeige "alle \
+                geprüft", sobald nichts Neues oder Ungeprüftes mehr übrig ist.</li>
                 <li>Gefundene defekte Dateien erscheinen in der Tabelle unten: Pfad, Anzahl defekter Frames, \
                 Erkennungszeit.</li>
                 <li>Wird eine Datei aus dem Show-Ordner entfernt, verschwindet sie auch aus der Tabelle.</li>
@@ -478,9 +511,12 @@ final class HelpDialog {
                 gefundenen Probleme bleibt dabei zur Referenz auf dem Bildschirm.</p>
 
                 <h3>Systemlast</h3>
-                <p>Dieser Modus ist bewusst so gebaut, dass er Resolume Arena auf derselben Maschine nicht stört: \
-                Dateien werden strikt nacheinander verarbeitet, nie parallel, und der Hintergrund-Thread läuft mit \
-                reduzierter Priorität. Bei Schnellprüfung mit Duplizierung ist die CPU-Last praktisch null (durch \
+                <p>Dieser Modus ist bewusst so gebaut, dass er Resolume Arena auf derselben Maschine nicht stört. \
+                Mehrere Dateien können parallel geprüft werden — der Regler "Parallele Prüfungen" auf diesem Tab \
+                begrenzt das auf höchstens die Hälfte der verfügbaren CPU-Kerne; jeder Hintergrund-Thread (wie der \
+                Überwachungs-Thread selbst) läuft mit reduzierter Priorität, sodass die Anwendung selbst beim \
+                Maximum des Reglers nicht mit Arena um die CPU konkurriert. Bei Schnellprüfung mit Duplizierung ist \
+                die CPU-Last praktisch null (durch \
                 Messungen bestätigt — der Engpass liegt dort beim Festplattenzugriff, nicht bei der Berechnung). \
                 Tiefenprüfung und Frame-Generierung über ffmpeg sind spürbar aufwendiger (sie erzeugen kurze \
                 Lastspitzen von einigen Sekunden pro neuer defekter Datei); für die Echtzeit-Überwachung sollte \
@@ -491,9 +527,11 @@ final class HelpDialog {
                 <h2>ffmpeg</h2>
                 <p>Wird für die Tiefenprüfung und die Frame-Generierung benötigt (in beiden Modi — Warteschlange \
                 und Show-Überwachung). Ohne ffmpeg stehen nur Schnellprüfung und Duplizierung zur Verfügung.</p>
-                <p>Die Schaltfläche "ffmpeg…" erlaubt es, eine vorhandene ffmpeg.exe manuell anzugeben. "ffmpeg \
-                herunterladen und installieren…" lädt den offiziellen Windows-Build herunter und installiert ihn \
-                lokal, falls ffmpeg auf dem Rechner nicht gefunden wird.</p>""");
+                <p>Die Schaltfläche "ffmpeg…" erlaubt es, eine vorhandene ffmpeg-Datei manuell anzugeben. "ffmpeg \
+                herunterladen und installieren…" gibt es nur in der Windows-Version — sie lädt den offiziellen \
+                Windows-Build herunter und installiert ihn lokal, falls ffmpeg auf dem Rechner nicht gefunden wird. \
+                Die macOS-Version hat diese Schaltfläche nicht — installieren Sie ffmpeg über Homebrew \
+                (<code>brew install ffmpeg</code>), die Anwendung findet es dann automatisch.</p>""");
 
         t.put("Lizenz", """
                 <h2>Lizenz</h2>
@@ -511,7 +549,7 @@ final class HelpDialog {
                 <p>"Einstellungen…" im Menü öffnet die Auswahl von Oberflächensprache, Farbschema und \
                 Oberflächenskalierung.</p>
                 <p>Das <b>Farbschema</b> (hell/dunkel/systemweit) wird sofort angewendet. "Systemweit" richtet \
-                sich nach dem aktuellen Windows-Modus (hell/dunkel) zum Zeitpunkt der Anwendung.</p>
+                sich nach dem aktuellen hellen/dunklen Modus des Betriebssystems zum Zeitpunkt der Anwendung.</p>
                 <p>Die <b>Oberflächenskalierung</b> (100–200 %) vergrößert Schriften, Symbole und \
                 Bedienelemente in der gesamten Anwendung — nützlich, wenn die Standardgröße schwer lesbar ist. \
                 Wird sofort angewendet, kein Neustart nötig.</p>
@@ -523,10 +561,12 @@ final class HelpDialog {
                 <p>"Version aktualisieren…" im Menü zeigt die Liste der zum Herunterladen verfügbaren Versionen \
                 — die Anwendung ruft diese Liste bei jedem Öffnen des Aktualisierungsfensters aus dem Internet \
                 ab, es wird also eine Netzwerkverbindung benötigt.</p>
-                <p>Nach der Auswahl einer Version und Klick auf "Aktualisieren" lädt die Anwendung die Datei der \
-                neuen Version herunter und startet sich anschließend automatisch neu, um sie anzuwenden — nichts \
-                muss von Hand gespeichert oder geschlossen werden, es lohnt sich aber, die aktuelle Arbeit an der \
-                Warteschlange oder der Show-Überwachung vor der Aktualisierung abzuschließen.</p>
+                <p>Nach der Auswahl einer Version und Klick auf "Aktualisieren" lädt die Anwendung ein \
+                vollständiges Paket der neuen Version herunter — das für Ihr Betriebssystem (Windows oder macOS) \
+                gebaute —, ersetzt damit alle von der Anwendung genutzten Dateien und startet sich anschließend \
+                automatisch neu, um die Aktualisierung anzuwenden. Nichts muss von Hand gespeichert oder \
+                geschlossen werden, es lohnt sich aber, die aktuelle Arbeit an der Warteschlange oder der \
+                Show-Überwachung vor der Aktualisierung abzuschließen.</p>
                 <p>Fehlt die erwartete Version in der Liste, wurde sie noch nicht zum Herunterladen \
                 veröffentlicht; die Liste ist außerdem ohne Internetverbindung leer oder nicht verfügbar.</p>""");
 
@@ -611,6 +651,14 @@ final class HelpDialog {
                 intégralité. Les fichiers nouveaux ou modifiés sont vérifiés automatiquement ; un fichier encore en \
                 cours de copie est reconnu à sa taille qui change et n'est pas touché tant qu'il ne s'est pas \
                 stabilisé.</li>
+                <li>Les dossiers/fichiers cachés et les fichiers qui ne sont pas des vidéos (pas .mov/.mp4) sont \
+                entièrement ignorés.</li>
+                <li>Si un fichier a un conteneur .mov mais est encodé avec un codec que cette application ne peut \
+                pas vérifier (par ex. HAP), cela apparaît comme un statut d'erreur « codec différent - … » plutôt \
+                que d'être silencieusement considéré comme correct.</li>
+                <li>Le bas de la fenêtre principale affiche la progression globale sur tout le contenu du dossier \
+                (combien de fichiers ont été vérifiés sur le total), avec un indicateur « tous vérifiés » une fois \
+                qu'il ne reste plus rien de nouveau ou de non vérifié.</li>
                 <li>Les fichiers corrompus trouvés apparaissent dans le tableau ci-dessous : chemin, nombre \
                 d'images corrompues, heure de détection.</li>
                 <li>Si un fichier est retiré du dossier du show, il disparaît aussi du tableau.</li>
@@ -640,9 +688,12 @@ final class HelpDialog {
                 des problèmes trouvés reste affichée à titre de référence.</p>
 
                 <h3>Charge système</h3>
-                <p>Ce mode est délibérément conçu pour ne pas gêner Resolume Arena tournant sur la même machine : \
-                les fichiers sont traités strictement un par un, jamais en parallèle, et le thread d'arrière-plan \
-                tourne à priorité réduite. En vérification rapide avec duplication, la charge CPU est pratiquement \
+                <p>Ce mode est délibérément conçu pour ne pas gêner Resolume Arena tournant sur la même machine. \
+                Plusieurs fichiers peuvent être vérifiés en parallèle — le curseur « Vérifications parallèles » sur \
+                cet onglet limite cela à la moitié au maximum des cœurs CPU disponibles ; chaque thread \
+                d'arrière-plan (comme le thread de surveillance lui-même) tourne à priorité réduite, si bien que \
+                même au maximum du curseur, l'application ne concurrence pas Arena pour le CPU. En vérification \
+                rapide avec duplication, la charge CPU est pratiquement \
                 nulle (confirmé par des mesures — le goulot d'étranglement est la lecture disque, pas le calcul). \
                 La vérification approfondie et la génération d'images via ffmpeg sont nettement plus lourdes (elles \
                 créent de brefs pics de charge de quelques secondes pour chaque nouveau fichier corrompu) ; pour la \
@@ -654,9 +705,11 @@ final class HelpDialog {
                 <p>Nécessaire pour la vérification approfondie et la génération d'images (dans les deux modes — \
                 file et surveillance de show). Sans ffmpeg, seules la vérification rapide et la duplication sont \
                 disponibles.</p>
-                <p>Le bouton « ffmpeg… » permet d'indiquer manuellement un ffmpeg.exe existant. « Télécharger et \
-                installer ffmpeg… » télécharge la build Windows officielle et l'installe localement si ffmpeg n'est \
-                pas trouvé sur l'ordinateur.</p>""");
+                <p>Le bouton « ffmpeg… » permet d'indiquer manuellement un ffmpeg existant. « Télécharger et \
+                installer ffmpeg… » n'existe que dans la version Windows — il télécharge la build Windows officielle \
+                et l'installe localement si ffmpeg n'est pas trouvé sur l'ordinateur. La version macOS n'a pas ce \
+                bouton — installez ffmpeg via Homebrew (<code>brew install ffmpeg</code>) et l'application le \
+                trouvera automatiquement.</p>""");
 
         t.put("Licence", """
                 <h2>Licence</h2>
@@ -674,7 +727,7 @@ final class HelpDialog {
                 <p>« Paramètres… » dans le menu ouvre le choix de la langue de l'interface, du thème de \
                 couleurs et de l'échelle de l'interface.</p>
                 <p>Le <b>thème</b> (clair/sombre/système) s'applique immédiatement. « Système » suit le mode \
-                clair/sombre actuel de Windows au moment de l'application.</p>
+                clair/sombre actuel du système d'exploitation au moment de l'application.</p>
                 <p>L'<b>échelle de l'interface</b> (100–200 %) agrandit les polices, icônes et contrôles dans \
                 toute l'application — utile si la taille par défaut est difficile à lire. S'applique \
                 immédiatement, sans redémarrage.</p>
@@ -686,10 +739,12 @@ final class HelpDialog {
                 <p>« Mettre à jour la version… » dans le menu affiche la liste des versions disponibles au \
                 téléchargement — l'application récupère cette liste sur internet à chaque ouverture de la fenêtre \
                 de mise à jour, une connexion réseau est donc nécessaire.</p>
-                <p>Après avoir choisi une version et cliqué sur « Mettre à jour », l'application télécharge le \
-                fichier de la nouvelle version puis redémarre automatiquement pour l'appliquer — rien à \
-                enregistrer ni à fermer à la main, mais mieux vaut terminer ce que vous faites dans la file ou la \
-                surveillance de show avant de mettre à jour.</p>
+                <p>Après avoir choisi une version et cliqué sur « Mettre à jour », l'application télécharge une \
+                archive complète des fichiers de la nouvelle version — celle compilée pour votre système \
+                d'exploitation (Windows ou macOS) —, remplace avec elle tous les fichiers utilisés par \
+                l'application, puis redémarre automatiquement pour appliquer la mise à jour. Rien à enregistrer ni \
+                à fermer à la main, mais mieux vaut terminer ce que vous faites dans la file ou la surveillance de \
+                show avant de mettre à jour.</p>
                 <p>Si la version attendue ne figure pas dans la liste, c'est qu'elle n'a pas encore été publiée \
                 comme disponible au téléchargement ; la liste sera aussi vide ou indisponible sans connexion \
                 internet.</p>""");
@@ -757,6 +812,11 @@ final class HelpDialog {
                 <ul>
                 <li>该文件夹（包括所有嵌套子文件夹）会被定期完整重新扫描。新增和已更改的文件会被自动检查；仍在复制\
                 中的文件会通过其变化的大小被识别出来，在其大小“稳定”之前不会被处理。</li>
+                <li>隐藏的文件夹/文件以及非视频文件（非 .mov/.mp4）会被完全跳过。</li>
+                <li>如果某个文件容器是 .mov，但编码所用的编解码器本程序无法检查（例如 HAP），会在状态中显示\
+                “其他编解码器 - …”的错误，而不会被静默地当作正常文件处理。</li>
+                <li>主窗口底部会显示整个文件夹内容的总体检查进度（已检查文件数/总文件数），当没有新增或尚未检查\
+                的文件时会显示“全部已检查”的提示。</li>
                 <li>发现的损坏文件会显示在下方的表格中：路径、损坏帧数、发现时间。</li>
                 <li>如果某个文件从演出文件夹中被移除，它也会从表格中消失。</li>
                 <li>下方的日志显示程序当前正在做什么——所有事件（发现、修复）也会保存到修复子文件夹内的一个统一文件 \
@@ -778,8 +838,10 @@ final class HelpDialog {
                 关闭监控，避免程序白白占用服务器资源。已发现问题的列表会保留在屏幕上以供查阅。</p>
 
                 <h3>系统负载</h3>
-                <p>该模式经过专门设计，不会干扰同一台机器上运行的 Resolume Arena：文件严格按顺序逐一处理，绝不并\
-                行，后台线程以较低优先级运行。在快速检查 + 复制方式下，CPU 占用几乎为零（已通过实测确认——瓶颈在于\
+                <p>该模式经过专门设计，不会干扰同一台机器上运行的 Resolume Arena。多个文件可以并行检查——本标签页\
+                中的“并行检查数”滑块会将并行数量限制在不超过可用 CPU 核心数的一半；每个后台工作线程（与监控线程本\
+                身一样）都以较低优先级运行，因此即使滑块调到最大，程序也不会与 Arena 争抢 CPU。在快速检查 + 复制方\
+                式下，CPU 占用几乎为零（已通过实测确认——瓶颈在于\
                 磁盘读取而非计算）。深度检查以及通过 ffmpeg 进行的帧生成明显更重（每处理一个新发现的损坏文件都会产\
                 生持续几秒的短暂负载高峰），因此实时监控最好保持使用快速检查 + 复制方式，更彻底的检查模式则通过常规\
                 队列有针对性地使用。</p>""");
@@ -788,8 +850,9 @@ final class HelpDialog {
                 <h2>ffmpeg</h2>
                 <p>深度检查和帧生成都需要用到它（在队列和演出监控两种模式下均如此）。没有 ffmpeg 时，只能使用快速\
                 检查和复制方式。</p>
-                <p>“ffmpeg…”按钮可手动指定一个已有的 ffmpeg.exe。“下载并安装 ffmpeg…”会在电脑上未找到 ffmpeg 时\
-                下载官方 Windows 版本并在本地安装。</p>""");
+                <p>“ffmpeg…”按钮可手动指定一个已有的 ffmpeg。“下载并安装 ffmpeg…”仅在 Windows 版本中提供——它会\
+                在电脑上未找到 ffmpeg 时下载官方 Windows 版本并在本地安装。macOS 版本没有这个按钮——请通过 \
+                Homebrew 安装 ffmpeg（<code>brew install ffmpeg</code>），程序会自动找到它。</p>""");
 
         t.put("许可证", """
                 <h2>许可证</h2>
@@ -802,7 +865,7 @@ final class HelpDialog {
         t.put("设置", """
                 <h2>设置</h2>
                 <p>菜单中的“设置…”可打开界面语言、配色主题和界面缩放的选择。</p>
-                <p><b>主题</b>（浅色/深色/跟随系统）会立即生效。“跟随系统”会在应用时读取当前 Windows 的浅色/深色\
+                <p><b>主题</b>（浅色/深色/跟随系统）会立即生效。“跟随系统”会在应用时读取当前操作系统的浅色/深色\
                 模式。</p>
                 <p><b>界面缩放</b>（100%–200%）会放大整个程序中的字体、图标和控件——如果默认大小不便阅读会很有帮\
                 助。立即生效，无需重启。</p>
@@ -812,8 +875,9 @@ final class HelpDialog {
                 <h2>更新版本</h2>
                 <p>菜单中的“更新版本…”会显示可供下载的版本列表——程序每次打开更新窗口时都会从网络获取该列表，因\
                 此需要联网。</p>
-                <p>选择一个版本并点击“更新”后，程序会下载新版本的文件，然后自动重启以应用更新——无需手动保存或\
-                关闭任何内容，但建议在更新前先完成当前在队列或演出监控中的操作。</p>
+                <p>选择一个版本并点击“更新”后，程序会下载新版本的完整文件包——针对您所用操作系统（Windows 或 \
+                macOS）构建的那一份——用它替换程序使用的所有文件，然后自动重启以应用更新。无需手动保存或关闭任何\
+                内容，但建议在更新前先完成当前在队列或演出监控中的操作。</p>
                 <p>如果您期望的版本没有出现在列表中，说明该版本尚未发布为可供下载；在没有网络连接时，列表也会为\
                 空或无法加载。</p>""");
 

@@ -74,11 +74,17 @@ public final class MainFrame extends JFrame {
         split.setDividerLocation(280);
         installProportionalDividerHandling(split);
 
+        ContentProgressPanel contentProgressPanel = new ContentProgressPanel();
+
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab(Messages.get("mainframe.tab.queue"), split);
-        tabs.addTab(Messages.get("mainframe.tab.showWatch"), new ShowWatchPanel());
+        tabs.addTab(Messages.get("mainframe.tab.showWatch"), new ShowWatchPanel(contentProgressPanel));
         add(tabs, BorderLayout.CENTER);
-        add(new SystemMonitorPanel(), BorderLayout.SOUTH);
+
+        JPanel southPanel = new JPanel(new BorderLayout(8, 0));
+        southPanel.add(contentProgressPanel, BorderLayout.CENTER);
+        southPanel.add(new SystemMonitorPanel(), BorderLayout.EAST);
+        add(southPanel, BorderLayout.SOUTH);
 
         installDragAndDrop();
         wireActions();
@@ -245,6 +251,10 @@ public final class MainFrame extends JFrame {
         modePanel.add(fastModeRadio);
         modePanel.add(deepModeRadio);
         modePanel.add(ffmpegBtn);
+        // The bundled installer only downloads a Windows ffmpeg build (see FfmpegInstaller) --
+        // on Mac, users are expected to install ffmpeg via Homebrew and FfmpegLocator will find
+        // it automatically (or via the "ffmpeg…" button below to point at it by hand).
+        ffmpegDownloadBtn.setVisible(dxvfix.util.Platform.WINDOWS);
         modePanel.add(ffmpegDownloadBtn);
         modePanel.add(ffmpegStatusLabel);
 
@@ -353,7 +363,11 @@ public final class MainFrame extends JFrame {
         problemsOnlyBox.addActionListener(e -> tableModel.setProblemsOnly(problemsOnlyBox.isSelected()));
         ffmpegBtn.addActionListener(e -> {
             JFileChooser fc = new JFileChooser();
-            fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("ffmpeg.exe", "exe"));
+            // ffmpeg binaries only carry a .exe extension on Windows -- filtering by it on other
+            // platforms would hide the very file (extensionless "ffmpeg") the user is picking.
+            if (dxvfix.util.Platform.WINDOWS) {
+                fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("ffmpeg.exe", "exe"));
+            }
             if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 String candidate = fc.getSelectedFile().getAbsolutePath();
                 if (FfmpegLocator.works(candidate)) {

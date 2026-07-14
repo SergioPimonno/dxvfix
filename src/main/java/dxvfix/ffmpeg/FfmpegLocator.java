@@ -49,18 +49,27 @@ public final class FfmpegLocator {
 
     private static Iterable<String> commonCandidates() {
         java.util.List<String> out = new java.util.ArrayList<>();
-        out.add("C:\\ffmpeg\\bin\\ffmpeg.exe");
-        out.add("C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe");
-        String localAppData = System.getenv("LOCALAPPDATA");
-        if (localAppData != null) {
-            Path wingetRoot = Path.of(localAppData, "Microsoft", "WinGet", "Packages");
-            if (Files.isDirectory(wingetRoot)) {
-                try (var pkgDirs = Files.list(wingetRoot)) {
-                    pkgDirs.filter(p -> p.getFileName().toString().toLowerCase().contains("ffmpeg"))
-                            .forEach(pkgDir -> findExeUnder(pkgDir, out));
-                } catch (IOException ignored) {
+        if (dxvfix.util.Platform.WINDOWS) {
+            out.add("C:\\ffmpeg\\bin\\ffmpeg.exe");
+            out.add("C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe");
+            String localAppData = System.getenv("LOCALAPPDATA");
+            if (localAppData != null) {
+                Path wingetRoot = Path.of(localAppData, "Microsoft", "WinGet", "Packages");
+                if (Files.isDirectory(wingetRoot)) {
+                    try (var pkgDirs = Files.list(wingetRoot)) {
+                        pkgDirs.filter(p -> p.getFileName().toString().toLowerCase().contains("ffmpeg"))
+                                .forEach(pkgDir -> findExeUnder(pkgDir, out));
+                    } catch (IOException ignored) {
+                    }
                 }
             }
+        } else if (dxvfix.util.Platform.MAC) {
+            // A GUI app launched from Finder (rather than a shell) doesn't inherit the user's
+            // shell PATH, so Homebrew's ffmpeg -- even though it's "on PATH" for Terminal users --
+            // can still be invisible to works("ffmpeg") here. These cover both Apple Silicon's
+            // default prefix and Intel/legacy Homebrew's.
+            out.add("/opt/homebrew/bin/ffmpeg");
+            out.add("/usr/local/bin/ffmpeg");
         }
         return out;
     }

@@ -82,7 +82,14 @@ final class ChangelogDialog {
             компьютеры Windows.</li>
             <li>Кнопка «Приобрести лицензию», ведущая на страницу с информацией о получении лицензии.</li>
             <li>Кнопка «Обновить версию»: скачивает и устанавливает выбранную версию программы прямо \
-            из приложения.</li>
+            из приложения — теперь скачивается полный пакет файлов под вашу операционную систему и \
+            заменяет всё используемое программой, а не один файл.</li>
+            <li>Версия приложения для macOS.</li>
+            <li>Режим сопровождения шоу: скрытые папки/файлы и файлы, не относящиеся к видео, больше \
+            не проверяются; кодек HAP распознаётся отдельно (статус «другой кодек - HAP» вместо ложного \
+            «всё в порядке»); прогресс-бар общего хода проверки контента в нижней части главного окна; \
+            несколько файлов теперь могут проверяться параллельно — ползунок выбора количества \
+            параллельных проверок (не более половины ядер процессора).</li>
             </ul>""";
 
     private static final String EN = """
@@ -117,7 +124,14 @@ final class ChangelogDialog {
             to other Windows machines.</li>
             <li>"Purchase license" button linking to a page with information on getting a license.</li>
             <li>"Update version" button: downloads and installs a selected version of the app \
-            directly from within it.</li>
+            directly from within it — now downloads a full package of files built for your OS and \
+            replaces everything the app uses, not just one file.</li>
+            <li>A macOS build of the app.</li>
+            <li>Show monitoring: hidden folders/files and non-video files are no longer scanned; the \
+            HAP codec is now recognized specifically ("different codec - HAP" status instead of a \
+            false "all good"); a progress bar for overall content-checking progress in the main \
+            window's bottom bar; multiple files can now be checked in parallel — a slider picks how \
+            many (capped at half the CPU cores).</li>
             </ul>""";
 
     private static final String DE = """
@@ -156,7 +170,16 @@ final class ChangelogDialog {
             <li>Schaltfläche "Lizenz erwerben", die eine Seite mit Informationen zum Lizenzerwerb \
             öffnet.</li>
             <li>Schaltfläche "Version aktualisieren": lädt eine ausgewählte Version der Anwendung \
-            herunter und installiert sie direkt aus der Anwendung heraus.</li>
+            herunter und installiert sie direkt aus der Anwendung heraus — lädt jetzt ein vollständiges \
+            Dateipaket für Ihr Betriebssystem herunter und ersetzt alles, was die Anwendung nutzt, \
+            nicht nur eine Datei.</li>
+            <li>Eine macOS-Version der Anwendung.</li>
+            <li>Show-Überwachung: versteckte Ordner/Dateien und Nicht-Video-Dateien werden nicht mehr \
+            gescannt; der HAP-Codec wird jetzt gezielt erkannt (Status "anderer Codec - HAP" statt eines \
+            fälschlichen "alles in Ordnung"); ein Fortschrittsbalken für den Gesamtfortschritt der \
+            Inhaltsprüfung in der unteren Leiste des Hauptfensters; mehrere Dateien können jetzt \
+            parallel geprüft werden — ein Regler bestimmt wie viele (begrenzt auf die Hälfte der \
+            CPU-Kerne).</li>
             </ul>""";
 
     private static final String FR = """
@@ -196,7 +219,16 @@ final class ChangelogDialog {
             <li>Bouton « Acheter une licence » renvoyant vers une page d'informations pour en \
             obtenir une.</li>
             <li>Bouton « Mettre à jour la version » : télécharge et installe une version \
-            sélectionnée de l'application directement depuis celle-ci.</li>
+            sélectionnée de l'application directement depuis celle-ci — télécharge désormais une \
+            archive complète des fichiers compilée pour votre système d'exploitation et remplace tout \
+            ce que l'application utilise, pas un seul fichier.</li>
+            <li>Une version macOS de l'application.</li>
+            <li>Surveillance de show : les dossiers/fichiers cachés et les fichiers non vidéo ne sont \
+            plus analysés ; le codec HAP est désormais reconnu spécifiquement (statut « codec différent \
+            - HAP » plutôt qu'un faux « tout va bien ») ; une barre de progression pour l'avancement \
+            global de la vérification du contenu dans le bas de la fenêtre principale ; plusieurs \
+            fichiers peuvent désormais être vérifiés en parallèle — un curseur choisit combien (limité \
+            à la moitié des cœurs CPU).</li>
             </ul>""";
 
     private static final String ZH = """
@@ -226,6 +258,11 @@ final class ChangelogDialog {
             <li>支持 NotchLC 编解码器（结构化帧校验）。</li>
             <li>独立的自包含应用程序包（自带 Java 运行环境），便于复制到其他 Windows 电脑上使用。</li>
             <li>“购买许可证”按钮，链接到提供许可证获取信息的页面。</li>
-            <li>“更新版本”按钮：可直接在程序内下载并安装选定版本的应用程序。</li>
+            <li>“更新版本”按钮：可直接在程序内下载并安装选定版本的应用程序——现在会下载针对您所用操作系统构建的\
+            完整文件包，并替换程序使用的所有文件，而不只是一个文件。</li>
+            <li>新增 macOS 版本。</li>
+            <li>演出监控：不再扫描隐藏文件夹/文件以及非视频文件；现在会专门识别 HAP 编解码器（显示“其他编解码器 \
+            - HAP”状态，而非错误地显示“一切正常”）；主窗口底部新增内容检查总体进度条；现在可以并行检查多个文\
+            件——通过滑块选择并行数量（上限为 CPU 核心数的一半）。</li>
             </ul>""";
 }

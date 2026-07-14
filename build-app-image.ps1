@@ -61,6 +61,15 @@ if ($LASTEXITCODE -ne 0) { throw "jpackage failed with exit code $LASTEXITCODE" 
 
 Remove-Item -Recurse -Force $stageDir
 
+# Zipped here (not left as a bare folder) so the self-updater (UpdateManager.java) has a single
+# predictable asset name to fetch from a GitHub Release -- it always requests "DXVFrameDoctor.zip"
+# for Windows, expecting the zip to contain this folder as its own top-level entry (i.e. zipping
+# the folder itself, not just its contents), which is exactly what Compress-Archive does when
+# given a directory path.
+$zipPath = Join-Path $destDir "$appName.zip"
+if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
+Compress-Archive -Path $appDir -DestinationPath $zipPath
+
 Write-Host "Built self-contained app at: $appDir"
 Write-Host "Run: $appDir\$appName.exe"
-Write-Host "To distribute: zip the '$appName' folder and copy it to another Windows machine -- no Java install needed there."
+Write-Host "Zipped for distribution/release upload: $zipPath"

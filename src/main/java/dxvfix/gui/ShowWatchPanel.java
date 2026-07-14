@@ -28,6 +28,9 @@ final class ShowWatchPanel extends JPanel {
     private static final String PREF_LAST_DIR = "lastContentDir";
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    /** Never allow more parallel workers than this fraction of the machine's cores, no matter what the slider says. */
+    private static final double MAX_WORKERS_CORE_FRACTION = 0.5;
+
     private final JTextField dirField = new JTextField();
     private final JButton browseBtn = new JButton(Messages.get("showwatch.browse"));
     private final JRadioButton fastModeRadio = new JRadioButton(Messages.get("showwatch.mode.fast"), true);
@@ -38,15 +41,20 @@ final class ShowWatchPanel extends JPanel {
     private final JButton startStopBtn = new JButton(Messages.get("showwatch.start"));
     private final JLabel statusLabel = new JLabel(Messages.get("showwatch.status.stopped"));
     private final JLabel ffmpegStatusLabel = new JLabel(" ");
+    private final int maxWorkersAllowed = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+    private final JSlider workersSlider = new JSlider(1, maxWorkersAllowed, 1);
+    private final JLabel workersValueLabel = new JLabel();
     private final WatchTableModel tableModel = new WatchTableModel();
     private final JTable table = new JTable(tableModel);
     private final JTextArea log = new JTextArea();
 
     private final ShowWatcher watcher;
+    private final ContentProgressPanel contentProgressPanel;
     private String ffmpegPath;
 
-    ShowWatchPanel() {
+    ShowWatchPanel(ContentProgressPanel contentProgressPanel) {
         super(new BorderLayout(8, 8));
+        this.contentProgressPanel = contentProgressPanel;
         setBorder(new EmptyBorder(8, 8, 8, 8));
 
         add(buildForm(), BorderLayout.NORTH);
@@ -78,6 +86,11 @@ final class ShowWatchPanel extends JPanel {
             @Override
             public void onLog(String message) {
                 SwingUtilities.invokeLater(() -> appendLog(message));
+            }
+
+            @Override
+            public void onScanProgress(int checkedCount, int totalCount) {
+                contentProgressPanel.update(checkedCount, totalCount);
             }
         });
     }
@@ -113,6 +126,19 @@ final class ShowWatchPanel extends JPanel {
         strategyRow.add(generateStrategyRadio);
         strategyRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         form.add(strategyRow);
+
+        JPanel workersRow = new JPanel(new WrapLayout(FlowLayout.LEFT));
+        workersRow.add(new JLabel(Messages.get("showwatch.workersLabel")));
+        workersSlider.setMajorTickSpacing(Math.max(1, maxWorkersAllowed - 1));
+        workersSlider.setMinorTickSpacing(1);
+        workersSlider.setPaintTicks(true);
+        workersSlider.setSnapToTicks(true);
+        workersSlider.setEnabled(maxWorkersAllowed > 1);
+        workersRow.add(workersSlider);
+        workersRow.add(workersValueLabel);
+        workersRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        form.add(workersRow);
+        updateWorkersValueLabel();
 
         JLabel hint = new JLabel(Messages.get("showwatch.hint"));
         hint.setFont(hint.getFont().deriveFont(Font.ITALIC, hint.getFont().getSize2D() - 1f));
@@ -192,6 +218,8 @@ final class ShowWatchPanel extends JPanel {
             }
         });
 
+        workersSlider.addChangeListener(e -> updateWorkersValueLabel());
+
         startStopBtn.addActionListener(e -> {
             if (watcher.isRunning()) {
                 watcher.stop();
@@ -225,8 +253,9 @@ final class ShowWatchPanel extends JPanel {
         tableModel.setBaseDir(dir);
         tableModel.clear();
         log.setText("");
+        contentProgressPanel.reset();
 
-        watcher.start(dir, mode, useGenerate, autoFix, ffmpegPath);
+        watcher.start(dir, mode, useGenerate, autoFix, ffmpegPath, workersSlider.getValue());
         startStopBtn.setText(Messages.get("showwatch.stop"));
         statusLabel.setText(Messages.get("showwatch.status.active", 0));
         setControlsEnabledWhileEditable(false);
@@ -240,6 +269,11 @@ final class ShowWatchPanel extends JPanel {
         startStopBtn.setText(Messages.get("showwatch.start"));
         statusLabel.setText(Messages.get("showwatch.status.stoppedWithHistory"));
         setControlsEnabledWhileEditable(true);
+        contentProgressPanel.reset();
+    }
+
+    private void updateWorkersValueLabel() {
+        workersValueLabel.setText(Messages.get("showwatch.workersValue", workersSlider.getValue(), maxWorkersAllowed));
     }
 
     private void setControlsEnabledWhileEditable(boolean enabled) {
@@ -250,6 +284,7 @@ final class ShowWatchPanel extends JPanel {
         duplicateStrategyRadio.setEnabled(enabled);
         generateStrategyRadio.setEnabled(enabled && ffmpegPath != null);
         autoFixBox.setEnabled(enabled);
+        workersSlider.setEnabled(enabled && maxWorkersAllowed > 1);
     }
 
     private void appendLog(String message) {

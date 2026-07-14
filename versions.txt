@@ -7,11 +7,17 @@
 # Format, one version per line, fields separated by "|":
 #   version|releaseTag|available|notes
 #
-#   version     - shown to the user in the dropdown, e.g. "2.0.1"
-#   releaseTag  - the exact GitHub Release tag that has "dxvfix.jar" attached as a release
-#                 asset, e.g. "v2.0.1". The app downloads from:
-#                 https://github.com/SergioPimonno/dxvfix/releases/download/<releaseTag>/dxvfix.jar
-#                 -- so this line does nothing useful until that release + asset actually exist.
+#   version     - shown to the user in the dropdown, e.g. "2.1"
+#   releaseTag  - the exact GitHub Release tag that has BOTH platform zips attached as release
+#                 assets, e.g. "v2.1". The running app downloads whichever one matches its own
+#                 OS (see VersionManifest.downloadUrl()):
+#                 https://github.com/SergioPimonno/dxvfix/releases/download/<releaseTag>/DXVFrameDoctor.zip      (Windows)
+#                 https://github.com/SergioPimonno/dxvfix/releases/download/<releaseTag>/DXVFrameDoctor-mac.zip  (macOS)
+#                 -- so this line does nothing useful until that release + both assets actually
+#                 exist. The Windows zip is produced by build-app-image.ps1; the macOS zip is
+#                 produced by .github/workflows/build-mac.yml (jpackage can't cross-build a Mac
+#                 app from Windows, so that one can only come from the CI workflow, not a local
+#                 script here).
 #   available   - "yes" or "no". Only "yes" rows are offered in the app. Flip a row to "no"
 #                 to pull a version without deleting its history here (e.g. a release that
 #                 turned out to have a bug).
@@ -20,6 +26,8 @@
 # Lines starting with "#" and blank lines are ignored. Newest version first is just convention,
 # order here doesn't affect anything.
 #
-# Nothing below is available yet -- flip a row to "yes" once you've actually published the
-# matching GitHub Release with dxvfix.jar attached as an asset.
+# The self-update mechanism now replaces the ENTIRE install (not just one jar) by downloading and
+# extracting the platform's full app-image zip -- a bigger change than earlier versions' single-jar
+# swap, and not yet verified end-to-end on a real machine. Leave this row at "no" until an actual
+# update run (ideally on a non-critical machine first) has been confirmed to work, then flip it.
 2.1|v2.1|no|

@@ -31,6 +31,12 @@ public final class VideoFileFinder {
         if (children == null) return;
         Arrays.sort(children);
         for (File c : children) {
+            // Skips both hidden folders (don't descend -- nothing inside is ever visited) and
+            // hidden files (don't collect), e.g. Windows Explorer's own thumbnail caches or a
+            // user's deliberately-hidden work-in-progress files -- not legitimate show content
+            // either way. The explicitly-chosen root itself is never checked here, only what's
+            // found underneath it, so picking a hidden folder as the watch root still works.
+            if (c.isHidden()) continue;
             if (c.isDirectory()) {
                 if (excludedDirNames.contains(c.getName().toLowerCase(Locale.ROOT))) continue;
                 collect(c, excludedDirNames, out);

@@ -20,9 +20,10 @@ import java.nio.charset.StandardCharsets;
  * internal "user scale factor" (which drives icon size, padding, borders, everything) from the
  * default font's point size relative to the platform baseline, so scaling the font up is enough
  * to scale the whole interface, no separate icon-scaling logic needed. SYSTEM theme is resolved
- * against the Windows "app mode" light/dark registry setting at the moment it's applied -- there's
- * no live OS-theme-change listener, so an OS-level switch is picked up the next time the theme is
- * (re)applied (Settings dialog OK, or app restart), not instantly.
+ * against the OS's own light/dark setting (Windows' "app mode" registry key, or macOS's
+ * AppsUseLightTheme-equivalent {@code AppleInterfaceStyle} default) at the moment it's applied --
+ * there's no live OS-theme-change listener, so an OS-level switch is picked up the next time the
+ * theme is (re)applied (Settings dialog OK, or app restart), not instantly.
  * <p>
  * Both theme and scale apply live (unlike language, which needs a restart -- see {@link
  * dxvfix.i18n.Messages}): swapping the look and feel resets {@code UIManager}'s "defaultFont" back
@@ -53,7 +54,7 @@ public final class ThemeManager {
         boolean dark = switch (theme) {
             case DARK -> true;
             case LIGHT -> false;
-            case SYSTEM -> isWindowsDarkModeActive();
+            case SYSTEM -> isSystemDarkModeActive();
         };
         LookAndFeel laf = dark ? new FlatDarkLaf() : new FlatLightLaf();
         try {
@@ -76,6 +77,11 @@ public final class ThemeManager {
         }
     }
 
+    private static boolean isSystemDarkModeActive() {
+        if (dxvfix.util.Platform.MAC) return isMacDarkModeActive();
+        return isWindowsDarkModeActive();
+    }
+
     private static boolean isWindowsDarkModeActive() {
         try {
             Process p = new ProcessBuilder("reg", "query",
@@ -94,6 +100,28 @@ public final class ThemeManager {
         } catch (Exception ignored) {
             // Not on Windows, registry key missing (older Windows without light/dark mode),
             // reg.exe unavailable, etc. -- default to light.
+        }
+        return false;
+    }
+
+    /**
+     * macOS only writes the {@code AppleInterfaceStyle} default when Dark mode is active -- it's
+     * simply absent in Light mode, hence checking for a non-empty "Dark" line rather than parsing
+     * a value the key won't even have.
+     */
+    private static boolean isMacDarkModeActive() {
+        try {
+            Process p = new ProcessBuilder("defaults", "read", "-g", "AppleInterfaceStyle").start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+                String line = reader.readLine();
+                if (line != null && line.trim().equalsIgnoreCase("Dark")) {
+                    return true;
+                }
+            }
+            p.waitFor();
+        } catch (Exception ignored) {
+            // Key absent (Light mode) or `defaults` unavailable -- default to light.
         }
         return false;
     }

@@ -15,7 +15,9 @@ Resolume itself.
 ## Features
 
 - **Codec support**: DXV / DXV3 (including the DXT1/DXT5/YCoCg texture variants), Apple ProRes
-  (422, HQ, LT, Proxy, 4444, 4444 XQ), H.264/AVC, H.265/HEVC, NotchLC.
+  (422, HQ, LT, Proxy, 4444, 4444 XQ), H.264/AVC, H.265/HEVC, NotchLC. Other recognized-but-
+  unsupported codecs (e.g. Hap) are called out by name in the error status rather than silently
+  treated as fine.
 - **Two verification modes**:
   - *Fast* — structural bitstream validation (header/size checks, DXV opcode bounds-checking
     ported from FFmpeg, ProRes slice-table validation, H.264/H.265 NAL framing checks, NotchLC
@@ -36,12 +38,15 @@ Resolume itself.
   subfolders); each file scans and repairs independently while you keep working with the rest of
   the queue.
 - **Show monitoring mode**: point it at a live show-content folder and it keeps watching as files
-  are added or removed, listing corrupted files as they show up. With auto-fix on, repaired
-  copies are written into a dedicated subfolder inside the watched directory (which is itself
-  never rescanned). Start/stop with one button so it costs nothing once a show's content is
-  locked in — see [Load testing](#load-testing) below.
-- **ffmpeg management**: auto-detects an existing install, or downloads and installs a Windows
-  build with one click if none is found.
+  are added or removed, listing corrupted files as they show up (hidden files/folders and
+  non-video files are skipped). A bottom-bar progress readout tracks how much of the current
+  content has been checked, and checking runs across a configurable number of parallel workers
+  (capped at half the machine's CPU cores). With auto-fix on, repaired copies are written into a
+  dedicated subfolder inside the watched directory (which is itself never rescanned). Start/stop
+  with one button so it costs nothing once a show's content is locked in — see
+  [Load testing](#load-testing) below.
+- **ffmpeg management**: auto-detects an existing install (Homebrew locations included on macOS);
+  on Windows it can also download and install a build with one click if none is found.
 - **Signed, machine-locked licensing**: the app won't start without a license file matching the
   machine's hardware fingerprint. A standalone admin tool issues licenses for other machines
   without needing to ship the signing key with the app.
@@ -51,11 +56,16 @@ Resolume itself.
 
 ## Requirements
 
-- Windows (uses Windows-specific paths/process handling in a few places, e.g. `%LOCALAPPDATA%`).
+- Windows or macOS. A few features are platform-specific: the one-click ffmpeg installer and
+  system dark-mode detection differ per OS (see [dxvfix.util.Platform](src/main/java/dxvfix/util/Platform.java)
+  for the handful of places that branch on it), but the app itself, scanning, repair, and show
+  monitoring all work identically on both.
 - JDK 17 or newer to build/run (developed and tested on JDK 25). No other build tooling required
-  — everything compiles with plain `javac`/`jar` via the provided PowerShell scripts.
+  — everything compiles with plain `javac`/`jar`, via the provided PowerShell scripts on Windows
+  or the equivalent shell scripts (`build.sh`, `build-app-image-mac.sh`) on macOS.
 - [ffmpeg](https://ffmpeg.org/) — optional, only needed for Deep verification and frame
-  generation. The app can download it for you.
+  generation. On Windows the app can download and install it for you; on macOS install it via
+  [Homebrew](https://brew.sh/) (`brew install ffmpeg`) and the app will find it automatically.
 
 ## Build
 
@@ -92,6 +102,26 @@ but requires the WiX toolset and, as of WiX v7, accepting its "Open Source Maint
 first — free under $10k/year revenue, but a deliberate step, so it isn't wired into any script
 here by default.)
 
+### macOS build
+
+`jpackage` always packages for whatever OS it's running on — it can't cross-build a macOS app from
+Windows. The Mac app-image (`DXVFrameDoctor.app`) is therefore built by
+[.github/workflows/build-mac.yml](.github/workflows/build-mac.yml) on a `macos-latest` GitHub
+Actions runner, not locally on a Windows dev machine. It runs automatically whenever a GitHub
+Release is published (attaching `DXVFrameDoctor-mac.zip` to that release) and can also be triggered
+manually from the Actions tab, which uploads the same zip as a workflow artifact.
+
+If you do have access to an actual Mac, the same two scripts the workflow calls also work locally:
+
+```bash
+./build.sh                    # compiles and packages dxvfix.jar (equivalent of build.ps1)
+./build-app-image-mac.sh      # bundles it into dist/DXVFrameDoctor.app (equivalent of build-app-image.ps1)
+```
+
+The resulting app isn't code-signed or notarized (no Apple Developer account is wired into this
+project), so Gatekeeper will block the first launch — right-click → Open, or allow it under System
+Settings → Privacy & Security → Open Anyway, bypasses that once.
+
 ## Usage
 
 ### Batch queue
@@ -121,10 +151,12 @@ open window; a language change takes effect the next time the app is launched.
 ### Updating
 
 The menu's "Обновить версию…" (Update version) dialog fetches [versions.txt](versions.txt) from
-this repo, lists whatever versions are marked available, downloads the selected one's `dxvfix.jar`
-from that version's GitHub Release, and restarts the app to apply it. See
-[versions.txt](versions.txt) itself for the exact format and how to publish a new version (attach
-`dxvfix.jar` as a release asset under a matching tag, then flip that row to `yes`).
+this repo, lists whatever versions are marked available, downloads the selected one's full
+app-image zip for the current OS (`DXVFrameDoctor.zip` on Windows, `DXVFrameDoctor-mac.zip` on
+macOS) from that version's GitHub Release, replaces every file the install uses with it, and
+restarts the app to apply it. See [versions.txt](versions.txt) itself for the exact format and how
+to publish a new version (attach both platform zips as release assets under a matching tag, then
+flip that row to `yes`).
 
 ## Licensing
 
@@ -157,9 +189,10 @@ The show monitoring mode was load-tested to make sure it doesn't compete with Re
 system resources on the same machine: with the recommended fast-scan + duplicate-repair
 configuration, CPU use was negligible (dominated by disk I/O, not computation). Even the heaviest
 path (deep scan + frame generation, which spawns ffmpeg subprocesses) only produces a brief,
-few-second burst of load per newly-detected corrupted file, and files are always processed one at
-a time — never in parallel — specifically to avoid contending with a real-time rendering app like
-Arena.
+few-second burst of load per newly-detected corrupted file. Multiple files can be checked in
+parallel (a slider in the Show monitoring tab caps this at half the machine's CPU cores), but every
+worker thread — like the watcher's own polling thread — runs at reduced OS priority, so even at the
+slider's maximum this can't outcompete a real-time rendering app like Arena for CPU.
 
 ## Project structure
 
@@ -181,6 +214,7 @@ src/main/java/dxvfix/
   i18n/       UI string lookup (messages_<lang>.properties)
   settings/   Persisted language/theme preference
   theme/      FlatLaf light/dark/system theme application
+  util/       Cross-platform helpers (video file discovery, OS detection)
   gui/        Swing UI
 ```
 

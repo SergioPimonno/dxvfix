@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Watches a "show content" directory: periodically re-walks it (recursively), scans any file
@@ -45,6 +48,8 @@ public final class ShowWatcher {
         void onFileUpdated(WatchedFile file);
         void onFileCleared(File sourceFile);
         void onLog(String message);
+        /** checkedCount/totalCount across the whole watched tree as of the most recent pass. */
+        void onScanProgress(int checkedCount, int totalCount);
     }
 
     private final Listener listener;
@@ -54,6 +59,8 @@ public final class ShowWatcher {
 
     private volatile boolean running;
     private Thread thread;
+    private ExecutorService executor;
+    private volatile int currentTotal;
 
     private File contentDir;
     private ScanEngine.Mode mode;
@@ -70,7 +77,7 @@ public final class ShowWatcher {
     }
 
     public synchronized void start(File contentDir, ScanEngine.Mode mode, boolean useGenerateStrategy,
-                                    boolean autoFix, String ffmpegPath) {
+                                    boolean autoFix, String ffmpegPath, int maxParallelWorkers) {
         if (running) return;
         this.contentDir = contentDir;
         this.mode = mode;
@@ -79,8 +86,21 @@ public final class ShowWatcher {
         this.ffmpegPath = ffmpegPath;
         knownSignatures.clear();
         badFiles.clear();
+        currentTotal = 0;
 
         running = true;
+        // Files within a single pass are independent, so bounding this at maxParallelWorkers is
+        // enough to bound total concurrent work -- every worker (like the poll thread itself)
+        // runs at reduced priority, so this can't outcompete Resolume Arena for CPU even at the
+        // slider's max (itself capped by the caller at half the available cores).
+        int workers = Math.max(1, maxParallelWorkers);
+        executor = Executors.newFixedThreadPool(workers, r -> {
+            Thread t = new Thread(r, "show-watcher-worker");
+            t.setDaemon(true);
+            t.setPriority(Math.max(Thread.MIN_PRIORITY, Thread.NORM_PRIORITY - 1));
+            return t;
+        });
+
         thread = new Thread(this::runLoop, "show-watcher");
         thread.setDaemon(true);
         // Slightly below normal priority: this is background housekeeping, not the show itself.
@@ -91,6 +111,7 @@ public final class ShowWatcher {
     public synchronized void stop() {
         running = false;
         if (thread != null) thread.interrupt();
+        if (executor != null) executor.shutdownNow();
     }
 
     /**
@@ -150,11 +171,22 @@ public final class ShowWatcher {
         listener.onLog(Messages.get("watcher.log.stopped"));
     }
 
+    /**
+     * Walks the tree once, then dispatches every changed/new file's processing to {@link
+     * #executor} (bounded to however many workers the user allowed) rather than handling them one
+     * at a time inline -- each file's work (stability wait, scan, optional repair) is independent
+     * of every other file's, so this is a straightforward fan-out/fan-in: submit everything this
+     * pass found changed, then block on every {@link Future} before the removal-reconciliation
+     * step below, so a file mid-processing is never pruned out from under itself.
+     */
     private void reconcile() {
         Set<String> excluded = Set.of(FIXED_SUBFOLDER_NAME.toLowerCase(Locale.ROOT));
         List<File> files = VideoFileFinder.find(contentDir, excluded);
+        currentTotal = files.size();
+        reportProgress(); // reflect a new/changed total immediately, even before any of it is (re)checked
 
         Set<String> currentRel = new HashSet<>();
+        List<Future<?>> pending = new ArrayList<>();
         for (File f : files) {
             if (!running) return;
             String rel = relativePath(f);
@@ -164,12 +196,22 @@ public final class ShowWatcher {
             String known = knownSignatures.get(rel);
             if (sig.equals(known)) continue; // unchanged since last pass
 
-            if (!isStable(f)) continue; // still being copied in; revisit next poll
-            if (!running) return;
-            if (fixingNow.contains(rel)) continue; // a manual fix is in flight for this file right now
+            // A manual fix is in flight for this file right now -- skip it this pass and retry
+            // later; processOneFile's own fixingNow.add() below is the atomic guard against the
+            // narrower race of a manual fix starting *after* this check but before a worker
+            // thread actually picks the task up.
+            if (fixingNow.contains(rel)) continue;
 
-            knownSignatures.put(rel, sig);
-            processFile(f, rel);
+            pending.add(executor.submit(() -> processOneFile(f, rel, sig)));
+        }
+
+        for (Future<?> fut : pending) {
+            try {
+                fut.get();
+            } catch (Exception ignored) {
+                // processOneFile handles/logs its own exceptions; this is only to block until
+                // this pass's dispatched work has actually finished.
+            }
         }
 
         for (String rel : new ArrayList<>(knownSignatures.keySet())) {
@@ -181,6 +223,25 @@ public final class ShowWatcher {
                 }
             }
         }
+        reportProgress();
+    }
+
+    private void processOneFile(File f, String rel, String sig) {
+        if (!running) return;
+        if (!isStable(f)) return; // still being copied in; revisit next poll
+        if (!running) return;
+        if (!fixingNow.add(rel)) return; // lost the race to a manual fix that started meanwhile
+        try {
+            knownSignatures.put(rel, sig);
+            processFile(f, rel);
+        } finally {
+            fixingNow.remove(rel);
+            reportProgress();
+        }
+    }
+
+    private void reportProgress() {
+        listener.onScanProgress(knownSignatures.size(), currentTotal);
     }
 
     private void processFile(File f, String rel) {

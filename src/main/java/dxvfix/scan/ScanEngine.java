@@ -3,6 +3,7 @@ package dxvfix.scan;
 import dxvfix.dxv.DxvFrameCheck;
 import dxvfix.ffmpeg.DeepDecodeValidator;
 import dxvfix.h26x.NalFrameCheck;
+import dxvfix.i18n.Messages;
 import dxvfix.mp4.Mp4Container;
 import dxvfix.mp4.SampleInfo;
 import dxvfix.mp4.TrackInfo;
@@ -38,6 +39,15 @@ public final class ScanEngine {
         }
         if (track.width <= 0 || track.height <= 0) {
             throw new IOException("Could not determine video dimensions (width/height) from stsd");
+        }
+        if (!track.codecKind.isSupported()) {
+            // Recognized (fourcc-identified) but not a codec this app can validate/repair --
+            // fail loudly and specifically here rather than falling into checkFast()'s generic
+            // default branch, which would otherwise mark every frame OK_SHALLOW with zero bad
+            // frames: silently treating an unsupported codec as "fine" is worse than an honest
+            // "can't check this" error, especially for something as common as HAP in this app's
+            // target audience.
+            throw new IOException(Messages.get("scan.unsupportedCodec", track.codecKind.label()));
         }
 
         ScanResult result = new ScanResult(container, track);
