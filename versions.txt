@@ -1,0 +1,25 @@
+# DXV Frame Doctor -- available versions for the in-app "Update version" feature.
+#
+# This file is fetched directly from GitHub (raw.githubusercontent.com) by the running app,
+# so it controls what shows up in the Update dialog's version list -- edit it by hand whenever
+# you publish (or retire) a release.
+#
+# Format, one version per line, fields separated by "|":
+#   version|releaseTag|available|notes
+#
+#   version     - shown to the user in the dropdown, e.g. "2.0.1"
+#   releaseTag  - the exact GitHub Release tag that has "dxvfix.jar" attached as a release
+#                 asset, e.g. "v2.0.1". The app downloads from:
+#                 https://github.com/SergioPimonno/dxvfix/releases/download/<releaseTag>/dxvfix.jar
+#                 -- so this line does nothing useful until that release + asset actually exist.
+#   available   - "yes" or "no". Only "yes" rows are offered in the app. Flip a row to "no"
+#                 to pull a version without deleting its history here (e.g. a release that
+#                 turned out to have a bug).
+#   notes       - free text, shown next to the version in the dropdown. Keep it short.
+#
+# Lines starting with "#" and blank lines are ignored. Newest version first is just convention,
+# order here doesn't affect anything.
+#
+# Nothing below is available yet -- flip a row to "yes" once you've actually published the
+# matching GitHub Release with dxvfix.jar attached as an asset.
+2.1|v2.1|no|

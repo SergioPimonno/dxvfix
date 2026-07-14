@@ -2,7 +2,7 @@
 
 A Resolume Arena user's tool to fix corrupted frames in video files.
 
-Supports **DXV / DXV3**, **Apple ProRes**, **H.264/AVC** and **H.265/HEVC**. Fixes corrupted
+Supports **DXV / DXV3**, **Apple ProRes**, **H.264/AVC**, **H.265/HEVC** and **NotchLC**. Fixes corrupted
 frames either by duplicating a nearby good frame or by generating a new frame based on its
 surroundings (motion-compensated interpolation). Requires a license file tied to the machine
 it runs on.
@@ -15,23 +15,23 @@ Resolume itself.
 ## Features
 
 - **Codec support**: DXV / DXV3 (including the DXT1/DXT5/YCoCg texture variants), Apple ProRes
-  (422, HQ, LT, Proxy, 4444, 4444 XQ), H.264/AVC, H.265/HEVC.
+  (422, HQ, LT, Proxy, 4444, 4444 XQ), H.264/AVC, H.265/HEVC, NotchLC.
 - **Two verification modes**:
   - *Fast* — structural bitstream validation (header/size checks, DXV opcode bounds-checking
-    ported from FFmpeg, ProRes slice-table validation, H.264/H.265 NAL framing checks). No
-    external dependencies.
+    ported from FFmpeg, ProRes slice-table validation, H.264/H.265 NAL framing checks, NotchLC
+    header/declared-size checks). No external dependencies.
   - *Deep* — actually decodes the file through ffmpeg and cross-checks which frames the decoder
     produced, catching corruption the fast structural check can't (at the cost of needing ffmpeg
     and running slower).
 - **Two repair strategies**:
   - *Duplicate neighbor* — replace a bad frame with a verbatim copy of the nearest good frame.
-    Always safe for intra-coded formats (DXV, ProRes); for H.264/H.265 prefers a guaranteed
-    intra/IDR donor so it can't desync neighboring frames' decoding.
+    Always safe for intra-coded formats (DXV, ProRes, NotchLC); for H.264/H.265 prefers a
+    guaranteed intra/IDR donor so it can't desync neighboring frames' decoding.
   - *Generate frame* — synthesize a new frame from the two nearest good frames via ffmpeg's
     motion-compensated interpolation, then re-encode it back into the source codec. Only applies
     to an isolated bad frame with good neighbors on both sides, and isn't available for DXV3's
-    alpha-capable DXT5 texture format (ffmpeg has no encoder for it) — falls back to duplication
-    automatically wherever it doesn't apply.
+    alpha-capable DXT5 texture format or for NotchLC (ffmpeg has no encoder for either) — falls
+    back to duplication automatically wherever it doesn't apply.
 - **Batch queue**: drop in any number of files or whole folders (recursively, including nested
   subfolders); each file scans and repairs independently while you keep working with the rest of
   the queue.
@@ -74,6 +74,24 @@ picks it up automatically and points `dxvfix.jar`'s manifest `Class-Path` at it,
 distributing the built app, ship the `lib/` folder alongside `dxvfix.jar` — not just the jar by
 itself.
 
+### Distributing to another machine
+
+Copying just `dxvfix.jar` to another Windows PC will fail to launch there — it needs both a Java
+runtime and `lib/flatlaf-<version>.jar` sitting next to it, neither of which travels with a bare
+file copy. For a self-contained package that needs neither:
+
+```powershell
+.\build.ps1              # build dxvfix.jar first
+.\build-app-image.ps1    # bundles dxvfix.jar + FlatLaf + a private Java runtime via jpackage
+```
+
+This produces `dist\DXVFrameDoctor\` — a folder with its own `DXVFrameDoctor.exe` launcher and
+bundled runtime. Zip that folder and copy it anywhere; the target machine needs nothing installed.
+(A full Windows installer with Start Menu shortcuts is also possible via `jpackage --type exe`,
+but requires the WiX toolset and, as of WiX v7, accepting its "Open Source Maintenance Fee" EULA
+first — free under $10k/year revenue, but a deliberate step, so it isn't wired into any script
+here by default.)
+
 ## Usage
 
 ### Batch queue
@@ -100,11 +118,21 @@ The menu's "Настройки…" (Settings) dialog picks the interface languag
 French, Chinese) and color theme (light/dark/system). Theme changes apply immediately across every
 open window; a language change takes effect the next time the app is launched.
 
+### Updating
+
+The menu's "Обновить версию…" (Update version) dialog fetches [versions.txt](versions.txt) from
+this repo, lists whatever versions are marked available, downloads the selected one's `dxvfix.jar`
+from that version's GitHub Release, and restarts the app to apply it. See
+[versions.txt](versions.txt) itself for the exact format and how to publish a new version (attach
+`dxvfix.jar` as a release asset under a matching tag, then flip that row to `yes`).
+
 ## Licensing
 
 License files are ECDSA-signed and tied to a machine fingerprint (derived from its MAC address),
 verified against a public key embedded in the app — so a valid license can only be produced by
-whoever holds the private signing key, not just anyone who has the app jar.
+whoever holds the private signing key, not just anyone who has the app jar. The no-license screen
+has a "Приобрести лицензию…" (Purchase license) button pointing at this repo for now — swap
+`PURCHASE_URL` in `LicenseGateDialog.java` for a real sales page once one exists.
 
 1. Generate a keypair once (keep `license_private.key` secret, never commit or distribute it):
    ```powershell
@@ -140,6 +168,7 @@ src/main/java/dxvfix/
   dxv/        DXV/DXV3 bitstream structural validator (ported from FFmpeg's dxv.c)
   prores/     ProRes frame/slice-table structural validator
   h26x/       H.264/H.265 NAL framing validator
+  notchlc/    NotchLC frame-header structural validator
   mp4/        MOV/MP4 box parser (sample tables, codec/track info)
   scan/       Orchestrates validators across a file's samples
   repair/     Rewrites the MOV/MP4 container with repaired samples
@@ -148,6 +177,7 @@ src/main/java/dxvfix/
   queue/      Batch queue data model
   watch/      Show monitoring engine
   license/    Signed license records, verification, machine fingerprinting
+  update/     In-app self-updater (versions.txt manifest, download + relaunch)
   i18n/       UI string lookup (messages_<lang>.properties)
   settings/   Persisted language/theme preference
   theme/      FlatLaf light/dark/system theme application

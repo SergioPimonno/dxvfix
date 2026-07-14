@@ -75,10 +75,14 @@ final class ChangelogDialog {
             <li>Светлая/тёмная/системная цветовая тема.</li>
             <li>Настраиваемый масштаб интерфейса (100–200%) для людей с нарушениями зрения.</li>
             <li>Пункт меню «Сообщить о баге» со ссылкой на GitHub Issues.</li>
-            <li>Кнопка «Запросить лицензию»: автоматически формирует запрос по email с указанием \
-            кода устройства и контактных данных.</li>
-            <li>Политика конфиденциальности, поясняющая обработку email при запросе лицензии.</li>
+            <li>Политика конфиденциальности, поясняющая обработку персональных данных.</li>
             <li>Экраны «О программе» и «История изменений».</li>
+            <li>Поддержка кодека NotchLC (структурная проверка кадров).</li>
+            <li>Отдельный автономный пакет приложения (со своей средой Java) для переноса на другие \
+            компьютеры Windows.</li>
+            <li>Кнопка «Приобрести лицензию», ведущая на страницу с информацией о получении лицензии.</li>
+            <li>Кнопка «Обновить версию»: скачивает и устанавливает выбранную версию программы прямо \
+            из приложения.</li>
             </ul>""";
 
     private static final String EN = """
@@ -106,10 +110,14 @@ final class ChangelogDialog {
             <li>Light/dark/system color theme.</li>
             <li>Adjustable interface scale (100–200%) for low-vision accessibility.</li>
             <li>"Report a bug" menu item linking to GitHub Issues.</li>
-            <li>"Request license" button: automatically composes an email request with the device \
-            code and the requester's contact details.</li>
-            <li>Privacy policy explaining how the email is handled for license requests.</li>
+            <li>Privacy policy explaining how personal data is handled.</li>
             <li>About and Changelog screens.</li>
+            <li>NotchLC codec support (structural frame validation).</li>
+            <li>A standalone, self-contained app package (with its own Java runtime) for copying \
+            to other Windows machines.</li>
+            <li>"Purchase license" button linking to a page with information on getting a license.</li>
+            <li>"Update version" button: downloads and installs a selected version of the app \
+            directly from within it.</li>
             </ul>""";
 
     private static final String DE = """
@@ -140,11 +148,15 @@ final class ChangelogDialog {
             <li>Helles/dunkles/systemweites Farbschema.</li>
             <li>Einstellbare Oberflächenskalierung (100–200 %) für Menschen mit Sehbehinderung.</li>
             <li>Menüpunkt "Fehler melden" mit Verweis auf GitHub Issues.</li>
-            <li>Schaltfläche "Lizenz anfordern": erstellt automatisch eine E-Mail-Anfrage mit \
-            Gerätecode und Kontaktdaten des Anfragenden.</li>
-            <li>Datenschutzhinweis, der die Verwendung der E-Mail-Adresse bei Lizenzanfragen \
-            erläutert.</li>
+            <li>Datenschutzerklärung, die den Umgang mit personenbezogenen Daten erläutert.</li>
             <li>Bildschirme "Über" und "Änderungsprotokoll".</li>
+            <li>Unterstützung für den NotchLC-Codec (strukturelle Frame-Prüfung).</li>
+            <li>Ein eigenständiges, in sich geschlossenes Anwendungspaket (mit eigener \
+            Java-Laufzeitumgebung) zum Kopieren auf andere Windows-Rechner.</li>
+            <li>Schaltfläche "Lizenz erwerben", die eine Seite mit Informationen zum Lizenzerwerb \
+            öffnet.</li>
+            <li>Schaltfläche "Version aktualisieren": lädt eine ausgewählte Version der Anwendung \
+            herunter und installiert sie direkt aus der Anwendung heraus.</li>
             </ul>""";
 
     private static final String FR = """
@@ -176,11 +188,15 @@ final class ChangelogDialog {
             <li>Échelle d'interface réglable (100–200 %) pour l'accessibilité aux personnes \
             malvoyantes.</li>
             <li>Élément de menu « Signaler un bug » renvoyant vers GitHub Issues.</li>
-            <li>Bouton « Demander une licence » : compose automatiquement un e-mail de demande \
-            avec le code de l'appareil et les coordonnées du demandeur.</li>
-            <li>Politique de confidentialité expliquant l'utilisation de l'e-mail lors d'une \
-            demande de licence.</li>
+            <li>Politique de confidentialité expliquant le traitement des données personnelles.</li>
             <li>Écrans « À propos » et « Journal des modifications ».</li>
+            <li>Prise en charge du codec NotchLC (vérification structurelle des images).</li>
+            <li>Un paquet d'application autonome (avec son propre environnement Java) à copier sur \
+            d'autres machines Windows.</li>
+            <li>Bouton « Acheter une licence » renvoyant vers une page d'informations pour en \
+            obtenir une.</li>
+            <li>Bouton « Mettre à jour la version » : télécharge et installe une version \
+            sélectionnée de l'application directement depuis celle-ci.</li>
             </ul>""";
 
     private static final String ZH = """
@@ -205,8 +221,11 @@ final class ChangelogDialog {
             <li>浅色/深色/跟随系统配色主题。</li>
             <li>可调节的界面缩放（100%–200%），便于视力不佳的用户使用。</li>
             <li>“报告问题”菜单项，链接到 GitHub Issues。</li>
-            <li>“申请许可证”按钮：自动生成包含设备代码和申请人联系方式的邮件请求。</li>
-            <li>说明申请许可证时邮箱使用方式的隐私政策。</li>
+            <li>说明个人数据处理方式的隐私政策。</li>
             <li>“关于”与“更新日志”界面。</li>
+            <li>支持 NotchLC 编解码器（结构化帧校验）。</li>
+            <li>独立的自包含应用程序包（自带 Java 运行环境），便于复制到其他 Windows 电脑上使用。</li>
+            <li>“购买许可证”按钮，链接到提供许可证获取信息的页面。</li>
+            <li>“更新版本”按钮：可直接在程序内下载并安装选定版本的应用程序。</li>
             </ul>""";
 }

@@ -147,6 +147,8 @@ public final class MainFrame extends JFrame {
         about.addActionListener(e -> AboutDialog.show(this));
         JMenuItem changelog = new JMenuItem(Messages.get("mainframe.menu.changelog"));
         changelog.addActionListener(e -> ChangelogDialog.show(this));
+        JMenuItem updateVersion = new JMenuItem(Messages.get("mainframe.menu.updateVersion"));
+        updateVersion.addActionListener(e -> UpdateDialog.show(this));
         menu.add(checkLicense);
         menu.add(settings);
         menu.add(privacyNotice);
@@ -156,6 +158,7 @@ public final class MainFrame extends JFrame {
         menu.addSeparator();
         menu.add(about);
         menu.add(changelog);
+        menu.add(updateVersion);
         bar.add(menu);
         return bar;
     }

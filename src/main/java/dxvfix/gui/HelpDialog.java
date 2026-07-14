@@ -84,7 +84,7 @@ final class HelpDialog {
                 <h2>Что делает приложение</h2>
                 <p>Ищет и по возможности исправляет битые (повреждённые) кадры в видеофайлах — \
                 в первую очередь DXV/DXV3 (кодек Resolume, из-за которого повреждённые кадры вызывают краш Arena), \
-                а также Apple ProRes, H.264/AVC и H.265/HEVC.</p>
+                а также Apple ProRes, H.264/AVC, H.265/HEVC и NotchLC.</p>
                 <p>Два режима работы:</p>
                 <ul>
                 <li><b>Пакетная проверка</b> — вручную собранная очередь файлов, проверяются и чинятся по команде.</li>
@@ -124,8 +124,9 @@ final class HelpDialog {
                 двух ближайших исправных кадров (motion-compensated interpolation через ffmpeg), затем перекодируется \
                 обратно в исходный кодек. Работает только когда: битый кадр — единственный (не серия подряд идущих), \
                 у него есть исправные соседи по обе стороны, и кодек поддерживается (ProRes, H.264, H.265, DXV с \
-                текстурой DXT1). <b>Не работает для DXV3 с альфа-каналом (DXT5)</b> — у ffmpeg нет энкодера для этого \
-                формата. Если генерация недоступна или не удалась — автоматически используется дублирование.</p>""");
+                текстурой DXT1). <b>Не работает для DXV3 с альфа-каналом (DXT5) и для NotchLC</b> — у ffmpeg нет \
+                энкодера для этих форматов. Если генерация недоступна или не удалась — автоматически используется \
+                дублирование.</p>""");
 
         t.put("Сопровождение шоу", """
                 <h2>Сопровождение шоу</h2>
@@ -195,7 +196,9 @@ final class HelpDialog {
                 <p>Проверить текущий статус лицензии (кому выдана, до какого числа действует, привязку к этому \
                 устройству) — пункт «Проверить лицензию» в меню.</p>
                 <p>Лицензии выдаёт администратор отдельным инструментом; если лицензия отсутствует или истекла, \
-                обратитесь за новой к тому, кто предоставил вам программу.</p>""");
+                обратитесь за новой к тому, кто предоставил вам программу. На экране, который появляется без \
+                действующей лицензии, есть кнопка «Приобрести лицензию…», ведущая на страницу с информацией о \
+                получении лицензии.</p>""");
 
         t.put("Настройки", """
                 <h2>Настройки</h2>
@@ -209,6 +212,17 @@ final class HelpDialog {
                 <p><b>Язык</b> применяется после перезапуска программы — при смене языка появится соответствующее \
                 напоминание.</p>""");
 
+        t.put("Обновление версии", """
+                <h2>Обновление версии</h2>
+                <p>Пункт «Обновить версию…» в меню показывает список версий, доступных для скачивания, — этот \
+                список программа получает из интернета при каждом открытии окна обновления, поэтому нужно \
+                подключение к сети.</p>
+                <p>После выбора версии и нажатия «Обновить» программа скачивает файл новой версии, а затем \
+                автоматически перезапускается, чтобы применить обновление — сохранять и закрывать вручную ничего \
+                не нужно, но стоит закончить текущую работу с очередью или сопровождением шоу перед обновлением.</p>
+                <p>Если версия, которую вы ожидали увидеть, отсутствует в списке — она ещё не опубликована как \
+                доступная для скачивания; список пуст или недоступен без интернета.</p>""");
+
         return t;
     }
 
@@ -219,7 +233,7 @@ final class HelpDialog {
                 <h2>What this app does</h2>
                 <p>Finds and, where possible, repairs corrupted (broken) frames in video files — primarily \
                 DXV/DXV3 (Resolume's codec, where a corrupted frame crashes Arena), as well as Apple ProRes, \
-                H.264/AVC and H.265/HEVC.</p>
+                H.264/AVC, H.265/HEVC and NotchLC.</p>
                 <p>Two modes of operation:</p>
                 <ul>
                 <li><b>Batch check</b> — a manually assembled queue of files, checked and fixed on command.</li>
@@ -260,8 +274,8 @@ final class HelpDialog {
                 re-encoded back into the source codec. Only works when: the broken frame is a single one (not a run \
                 of consecutive broken frames), it has good neighbors on both sides, and the codec is supported \
                 (ProRes, H.264, H.265, DXV with DXT1 texture). <b>Doesn't work for DXV3 with an alpha channel \
-                (DXT5)</b> — ffmpeg has no encoder for that format. If generation is unavailable or fails, \
-                duplication is used automatically.</p>""");
+                (DXT5) or for NotchLC</b> — ffmpeg has no encoder for those formats. If generation is unavailable \
+                or fails, duplication is used automatically.</p>""");
 
         t.put("Show Monitoring", """
                 <h2>Show monitoring</h2>
@@ -330,7 +344,8 @@ final class HelpDialog {
                 <p>To check the current license status (who it's issued to, its expiry date, whether it matches \
                 this device) — use "Check license" in the menu.</p>
                 <p>Licenses are issued by an administrator using a separate tool; if a license is missing or \
-                expired, contact whoever gave you the app for a new one.</p>""");
+                expired, contact whoever gave you the app for a new one. The screen that appears without a valid \
+                license has a "Purchase license…" button that opens a page with information on getting one.</p>""");
 
         t.put("Settings", """
                 <h2>Settings</h2>
@@ -342,6 +357,17 @@ final class HelpDialog {
                 <p>The <b>language</b> applies after restarting the app — you'll see a reminder to that effect \
                 when you change it.</p>""");
 
+        t.put("Update Version", """
+                <h2>Update Version</h2>
+                <p>"Update version…" in the menu shows the list of versions available for download — the app \
+                fetches this list from the internet each time the update window opens, so it needs a network \
+                connection.</p>
+                <p>After picking a version and clicking "Update", the app downloads the new version's file and \
+                then restarts itself automatically to apply it — nothing needs to be saved or closed by hand, but \
+                it's worth finishing whatever you're doing with the queue or show monitoring before updating.</p>
+                <p>If the version you expected isn't in the list, it hasn't been published as available for \
+                download yet; the list will also be empty or unavailable without an internet connection.</p>""");
+
         return t;
     }
 
@@ -352,7 +378,7 @@ final class HelpDialog {
                 <h2>Was die Anwendung macht</h2>
                 <p>Findet und repariert nach Möglichkeit beschädigte (defekte) Frames in Videodateien — in erster \
                 Linie DXV/DXV3 (der Codec von Resolume, bei dem ein beschädigter Frame Arena zum Absturz bringt), \
-                sowie Apple ProRes, H.264/AVC und H.265/HEVC.</p>
+                sowie Apple ProRes, H.264/AVC, H.265/HEVC und NotchLC.</p>
                 <p>Zwei Betriebsarten:</p>
                 <ul>
                 <li><b>Stapelprüfung</b> — eine manuell zusammengestellte Dateiwarteschlange, die auf Befehl \
@@ -397,8 +423,9 @@ final class HelpDialog {
                 ffmpeg) und anschließend zurück in den ursprünglichen Codec kodiert. Funktioniert nur, wenn: der \
                 defekte Frame einzeln steht (keine Serie aufeinanderfolgender defekter Frames), er auf beiden \
                 Seiten intakte Nachbarn hat und der Codec unterstützt wird (ProRes, H.264, H.265, DXV mit \
-                DXT1-Textur). <b>Funktioniert nicht bei DXV3 mit Alphakanal (DXT5)</b> — ffmpeg hat dafür keinen \
-                Encoder. Ist die Generierung nicht verfügbar oder schlägt fehl, wird automatisch dupliziert.</p>""");
+                DXT1-Textur). <b>Funktioniert nicht bei DXV3 mit Alphakanal (DXT5) oder bei NotchLC</b> — ffmpeg hat \
+                dafür keinen Encoder. Ist die Generierung nicht verfügbar oder schlägt fehl, wird automatisch \
+                dupliziert.</p>""");
 
         t.put("Show-Überwachung", """
                 <h2>Show-Überwachung</h2>
@@ -476,7 +503,8 @@ final class HelpDialog {
                 dieses Gerät) — Menüpunkt "Lizenz prüfen".</p>
                 <p>Lizenzen werden von einem Administrator mit einem separaten Werkzeug ausgestellt; fehlt die \
                 Lizenz oder ist sie abgelaufen, wenden Sie sich an denjenigen, der Ihnen die Anwendung \
-                bereitgestellt hat.</p>""");
+                bereitgestellt hat. Der Bildschirm, der ohne gültige Lizenz erscheint, enthält eine Schaltfläche \
+                "Lizenz erwerben…", die eine Seite mit Informationen zum Erwerb einer Lizenz öffnet.</p>""");
 
         t.put("Einstellungen", """
                 <h2>Einstellungen</h2>
@@ -490,6 +518,18 @@ final class HelpDialog {
                 <p>Die <b>Sprache</b> wird nach einem Neustart der Anwendung wirksam — beim Wechseln erscheint \
                 ein entsprechender Hinweis.</p>""");
 
+        t.put("Version aktualisieren", """
+                <h2>Version aktualisieren</h2>
+                <p>"Version aktualisieren…" im Menü zeigt die Liste der zum Herunterladen verfügbaren Versionen \
+                — die Anwendung ruft diese Liste bei jedem Öffnen des Aktualisierungsfensters aus dem Internet \
+                ab, es wird also eine Netzwerkverbindung benötigt.</p>
+                <p>Nach der Auswahl einer Version und Klick auf "Aktualisieren" lädt die Anwendung die Datei der \
+                neuen Version herunter und startet sich anschließend automatisch neu, um sie anzuwenden — nichts \
+                muss von Hand gespeichert oder geschlossen werden, es lohnt sich aber, die aktuelle Arbeit an der \
+                Warteschlange oder der Show-Überwachung vor der Aktualisierung abzuschließen.</p>
+                <p>Fehlt die erwartete Version in der Liste, wurde sie noch nicht zum Herunterladen \
+                veröffentlicht; die Liste ist außerdem ohne Internetverbindung leer oder nicht verfügbar.</p>""");
+
         return t;
     }
 
@@ -500,7 +540,7 @@ final class HelpDialog {
                 <h2>Ce que fait l'application</h2>
                 <p>Recherche et, si possible, répare les images corrompues dans les fichiers vidéo — \
                 principalement en DXV/DXV3 (le codec de Resolume, où une image corrompue fait planter Arena), \
-                ainsi qu'en Apple ProRes, H.264/AVC et H.265/HEVC.</p>
+                ainsi qu'en Apple ProRes, H.264/AVC, H.265/HEVC et NotchLC.</p>
                 <p>Deux modes de fonctionnement :</p>
                 <ul>
                 <li><b>Vérification par lots</b> — une file de fichiers assemblée manuellement, vérifiée et \
@@ -544,9 +584,9 @@ final class HelpDialog {
                 mouvement via ffmpeg), puis réencodée dans le codec d'origine. Ne fonctionne que si : l'image \
                 corrompue est isolée (pas une série d'images corrompues consécutives), elle a des voisines \
                 correctes des deux côtés, et le codec est pris en charge (ProRes, H.264, H.265, DXV avec texture \
-                DXT1). <b>Ne fonctionne pas pour DXV3 avec canal alpha (DXT5)</b> — ffmpeg n'a pas d'encodeur pour \
-                ce format. Si la génération est indisponible ou échoue, la duplication est utilisée \
-                automatiquement.</p>""");
+                DXT1). <b>Ne fonctionne pas pour DXV3 avec canal alpha (DXT5) ni pour NotchLC</b> — ffmpeg n'a pas \
+                d'encodeur pour ces formats. Si la génération est indisponible ou échoue, la duplication est \
+                utilisée automatiquement.</p>""");
 
         t.put("Surveillance de show", """
                 <h2>Surveillance de show</h2>
@@ -626,7 +666,8 @@ final class HelpDialog {
                 est valide, son lien avec cet appareil) — élément de menu « Vérifier la licence ».</p>
                 <p>Les licences sont délivrées par un administrateur via un outil séparé ; si une licence est \
                 absente ou expirée, contactez la personne qui vous a fourni l'application pour en obtenir une \
-                nouvelle.</p>""");
+                nouvelle. L'écran qui apparaît sans licence valide comporte un bouton « Acheter une licence… » \
+                qui ouvre une page d'informations pour en obtenir une.</p>""");
 
         t.put("Paramètres", """
                 <h2>Paramètres</h2>
@@ -640,6 +681,19 @@ final class HelpDialog {
                 <p>La <b>langue</b> s'applique après le redémarrage de l'application — un rappel s'affiche lors \
                 du changement.</p>""");
 
+        t.put("Mettre à jour la version", """
+                <h2>Mettre à jour la version</h2>
+                <p>« Mettre à jour la version… » dans le menu affiche la liste des versions disponibles au \
+                téléchargement — l'application récupère cette liste sur internet à chaque ouverture de la fenêtre \
+                de mise à jour, une connexion réseau est donc nécessaire.</p>
+                <p>Après avoir choisi une version et cliqué sur « Mettre à jour », l'application télécharge le \
+                fichier de la nouvelle version puis redémarre automatiquement pour l'appliquer — rien à \
+                enregistrer ni à fermer à la main, mais mieux vaut terminer ce que vous faites dans la file ou la \
+                surveillance de show avant de mettre à jour.</p>
+                <p>Si la version attendue ne figure pas dans la liste, c'est qu'elle n'a pas encore été publiée \
+                comme disponible au téléchargement ; la liste sera aussi vide ou indisponible sans connexion \
+                internet.</p>""");
+
         return t;
     }
 
@@ -649,7 +703,7 @@ final class HelpDialog {
         t.put("概览", """
                 <h2>本应用的功能</h2>
                 <p>查找并尽可能修复视频文件中损坏的帧——主要针对 DXV/DXV3（Resolume 使用的编解码器，其损坏帧会导致 \
-                Arena 崩溃），同时也支持 Apple ProRes、H.264/AVC 和 H.265/HEVC。</p>
+                Arena 崩溃），同时也支持 Apple ProRes、H.264/AVC、H.265/HEVC 和 NotchLC。</p>
                 <p>两种工作模式：</p>
                 <ul>
                 <li><b>批量检查</b>——手动收集的文件队列，按命令进行检查和修复。</li>
@@ -683,8 +737,8 @@ final class HelpDialog {
                 <p><b>生成帧（插值）</b>——不复制相邻帧，而是基于最近的两个完好帧合成一个新帧（通过 ffmpeg 进行运动\
                 补偿插值），然后重新编码回原始编解码器。仅在以下情况下有效：损坏帧是孤立的（不是连续多帧损坏），其两\
                 侧都有完好的相邻帧，且编解码器受支持（ProRes、H.264、H.265、使用 DXT1 纹理的 DXV）。<b>对带 Alpha \
-                通道的 DXV3（DXT5）无效</b>——ffmpeg 没有该格式的编码器。如果生成不可用或失败，会自动改用复制方\
-                式。</p>""");
+                通道的 DXV3（DXT5）以及 NotchLC 无效</b>——ffmpeg 没有这些格式的编码器。如果生成不可用或失败，会自动\
+                改用复制方式。</p>""");
 
         t.put("演出监控", """
                 <h2>演出监控</h2>
@@ -742,7 +796,8 @@ final class HelpDialog {
                 <p>本程序需要一个绑定到本机（通过设备硬件标识符）的许可证文件。没有有效许可证程序无法启动。</p>
                 <p>要查看当前许可证状态（颁发对象、有效期至、是否与本设备匹配)——使用菜单中的“检查许可证”。</p>
                 <p>许可证由管理员通过单独的工具颁发；如果许可证缺失或已过期，请联系为您提供本程序的人员获取新的许\
-                可证。</p>""");
+                可证。没有有效许可证时出现的界面中有一个“购买许可证…”按钮，点击后会打开一个提供购买/获取许可证相\
+                关信息的页面。</p>""");
 
         t.put("设置", """
                 <h2>设置</h2>
@@ -752,6 +807,15 @@ final class HelpDialog {
                 <p><b>界面缩放</b>（100%–200%）会放大整个程序中的字体、图标和控件——如果默认大小不便阅读会很有帮\
                 助。立即生效，无需重启。</p>
                 <p><b>语言</b>在重启程序后生效——更改语言时会显示相应的提示。</p>""");
+
+        t.put("更新版本", """
+                <h2>更新版本</h2>
+                <p>菜单中的“更新版本…”会显示可供下载的版本列表——程序每次打开更新窗口时都会从网络获取该列表，因\
+                此需要联网。</p>
+                <p>选择一个版本并点击“更新”后，程序会下载新版本的文件，然后自动重启以应用更新——无需手动保存或\
+                关闭任何内容，但建议在更新前先完成当前在队列或演出监控中的操作。</p>
+                <p>如果您期望的版本没有出现在列表中，说明该版本尚未发布为可供下载；在没有网络连接时，列表也会为\
+                空或无法加载。</p>""");
 
         return t;
     }

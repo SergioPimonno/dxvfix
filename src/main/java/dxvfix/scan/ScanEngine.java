@@ -6,6 +6,7 @@ import dxvfix.h26x.NalFrameCheck;
 import dxvfix.mp4.Mp4Container;
 import dxvfix.mp4.SampleInfo;
 import dxvfix.mp4.TrackInfo;
+import dxvfix.notchlc.NotchLcFrameCheck;
 import dxvfix.prores.ProResFrameCheck;
 
 import java.io.File;
@@ -93,6 +94,8 @@ public final class ScanEngine {
             case H264:
             case H265:
                 return NalFrameCheck.check(buf, track.codecKind, track.nalLengthSize);
+            case NOTCHLC:
+                return NotchLcFrameCheck.check(buf, track.width, track.height);
             default:
                 return new FrameCheckResult(FrameCheckResult.Status.OK_SHALLOW,
                         "no fast structural validator for this codec; use Deep mode", track.codecKind.label());

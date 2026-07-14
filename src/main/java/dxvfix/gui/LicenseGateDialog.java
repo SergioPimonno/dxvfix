@@ -8,12 +8,17 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 /** Blocking startup gate: requires a valid, machine-matched, signed license file to proceed. */
 public final class LicenseGateDialog extends JDialog {
+
+    // Placeholder until a dedicated sales/licensing site exists -- swap this for the real URL
+    // once it's up. Kept as a single named constant so that's a one-line change later.
+    private static final String PURCHASE_URL = "https://github.com/SergioPimonno/dxvfix";
 
     private boolean approved = false;
 
@@ -55,11 +60,11 @@ public final class LicenseGateDialog extends JDialog {
         JLabel statusLabel = new JLabel(" ");
         statusLabel.setForeground(new Color(180, 40, 40));
 
-        JButton requestBtn = new JButton(Messages.get("licenseGate.requestLicense"));
+        JButton purchaseBtn = new JButton(Messages.get("licenseGate.purchaseLicense"));
         JButton loadBtn = new JButton(Messages.get("licenseGate.loadFile"));
         JButton exitBtn = new JButton(Messages.get("licenseGate.exit"));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttons.add(requestBtn);
+        buttons.add(purchaseBtn);
         buttons.add(loadBtn);
         buttons.add(exitBtn);
 
@@ -89,7 +94,13 @@ public final class LicenseGateDialog extends JDialog {
             }
         });
         exitBtn.addActionListener(e -> dispose());
-        requestBtn.addActionListener(e -> LicenseRequestDialog.show(this, finalFingerprint));
+        purchaseBtn.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().browse(new URI(PURCHASE_URL));
+            } catch (Exception ex) {
+                statusLabel.setText(Messages.get("licenseGate.purchaseFailed", ex.getMessage()));
+            }
+        });
 
         setContentPane(content);
         setPreferredSize(new Dimension(560, 260));

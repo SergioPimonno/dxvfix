@@ -1,7 +1,7 @@
 package dxvfix.mp4;
 
 public enum CodecKind {
-    DXV, PRORES, H264, H265, UNKNOWN;
+    DXV, PRORES, H264, H265, NOTCHLC, UNKNOWN;
 
     public static CodecKind fromFourCC(String fourcc) {
         if (fourcc == null) return UNKNOWN;
@@ -15,6 +15,8 @@ public enum CodecKind {
                 return H264;
             case "hvc1": case "hev1":
                 return H265;
+            case "nclc":
+                return NOTCHLC;
             default:
                 // DXV assets are sometimes tagged with other DXD-prefixed fourccs too.
                 return fourcc.startsWith("DXD") ? DXV : UNKNOWN;
@@ -27,6 +29,7 @@ public enum CodecKind {
             case PRORES: return "Apple ProRes";
             case H264: return "H.264/AVC";
             case H265: return "H.265/HEVC";
+            case NOTCHLC: return "NotchLC";
             default: return "Unknown";
         }
     }
