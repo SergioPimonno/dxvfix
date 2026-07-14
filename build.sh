@@ -18,7 +18,14 @@ rm -rf "$out"
 mkdir -p "$out"
 
 echo "Compiling sources..."
-mapfile -t sources < <(find "$src" -name '*.java')
+# NOT `mapfile` -- it's a Bash 4+ builtin, but macOS's system /bin/bash is frozen at 3.2 (Apple
+# stopped updating it in 2007 over GPLv3 licensing), which is exactly what GitHub's macos-latest
+# runners invoke for a plain `#!/bin/bash` shebang. This `while read` + array-append idiom works
+# on both.
+sources=()
+while IFS= read -r f; do
+    sources+=("$f")
+done < <(find "$src" -name '*.java')
 javac -encoding UTF-8 -cp "$flatlaf_jar" -d "$out" "${sources[@]}"
 
 if [ -d "$resources" ]; then
