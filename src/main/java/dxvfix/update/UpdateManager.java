@@ -148,12 +148,29 @@ public final class UpdateManager {
                     buildRelaunchScriptWindows(downloadedZip, stageDir, currentJar, appDir, layout),
                     StandardCharsets.UTF_8);
 
-            // "DXVUpdate" here is just the new console window's title, required by `start`
-            // whenever the next argument is itself quoted (otherwise it mistakes the quoted path
-            // for the title) -- a plain non-empty word sidesteps that ambiguity entirely, unlike
-            // the more common "" empty-title idiom, which risks getting double-quoted into "\"\""
-            // once Java's ProcessBuilder and then cmd.exe /c each re-parse the argument list.
-            new ProcessBuilder("cmd", "/c", "start", "/min", "DXVUpdate", script.toAbsolutePath().toString())
+            // NOT `cmd /c start /min "DXVUpdate" <script>` -- that was the original approach (the
+            // "DXVUpdate" title was meant to disambiguate the title from the command for `start`),
+            // but confirmed by direct reproduction that it doesn't actually work: Java's
+            // ProcessBuilder doesn't quote a space-free token like "DXVUpdate" when building the
+            // Win32 command line, so `start` never recognizes it as a title and instead tries to
+            // launch a program literally named "DXVUpdate" -- which fails with "Windows cannot
+            // find 'DXVUpdate'" and the relaunch script never runs at all. A plain `cmd /c
+            // <script>` has no such ambiguity and was verified to actually execute the script.
+            // Windows does not kill child processes when their parent exits, so this doesn't need
+            // `start`'s detachment either -- the script keeps running after this JVM exits on its
+            // own.
+            //
+            // Redirect.DISCARD on both streams is not optional: ProcessBuilder defaults to PIPE,
+            // and since this JVM exits (or at least never reads those pipes) right after calling
+            // this method, the child cmd.exe process can block the instant anything in its process
+            // tree (cmd.exe itself, or a child like powershell.exe) needs to write to its inherited
+            // stdout/stderr handle and finds the pipe full with nothing draining it -- confirmed by
+            // direct reproduction: the exact same script ran instantly to completion every time
+            // when its output was redirected to a file, but hung for the full ~30s retry budget
+            // every time when left as an undrained default PIPE.
+            new ProcessBuilder("cmd", "/c", script.toAbsolutePath().toString())
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
         } else {
             Path script = Files.createTempFile("dxvfix-update-", ".sh");
