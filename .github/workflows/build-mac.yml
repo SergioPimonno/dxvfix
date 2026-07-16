@@ -1,0 +1,57 @@
+name: Build macOS app
+
+# jpackage cannot cross-package a macOS app from Windows/Linux -- it always packages for whatever
+# OS it's actually running on. This workflow is the only place that produces a real
+# DXVFrameDoctor.app; the Windows .exe app-image is still built locally via build-app-image.ps1.
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing release tag to attach the built zip to (e.g. v2.1). Leave empty to just upload it as a workflow artifact.'
+        required: false
+        type: string
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Build jar
+        run: |
+          chmod +x build.sh build-app-image-mac.sh
+          ./build.sh
+
+      - name: Build app image
+        run: ./build-app-image-mac.sh
+
+      - name: Zip app bundle
+        run: |
+          cd dist
+          ditto -c -k --sequesterRsrc --keepParent "DXVFrameDoctor.app" "DXVFrameDoctor-mac.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DXVFrameDoctor-mac
+          path: dist/DXVFrameDoctor-mac.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.event_name == 'release' && github.event.release.tag_name || inputs.release_tag }}"
+          gh release upload "$TAG" "dist/DXVFrameDoctor-mac.zip" --clobber

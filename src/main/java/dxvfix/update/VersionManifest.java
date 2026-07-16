@@ -23,7 +23,10 @@ public final class VersionManifest {
     public static final String MANIFEST_URL =
             "https://raw.githubusercontent.com/SergioPimonno/dxvfix/main/versions.txt";
     private static final String DOWNLOAD_URL_TEMPLATE =
-            "https://github.com/SergioPimonno/dxvfix/releases/download/%s/dxvfix.jar";
+            "https://github.com/SergioPimonno/dxvfix/releases/download/%s/%s";
+    /** Matches the --name build-app-image.ps1/build-app-image-mac.sh pass to jpackage. */
+    private static final String WINDOWS_ASSET_NAME = "DXVFrameDoctor.zip";
+    private static final String MAC_ASSET_NAME = "DXVFrameDoctor-mac.zip";
 
     public final String version;
     public final String releaseTag;
@@ -37,9 +40,14 @@ public final class VersionManifest {
         this.notes = notes;
     }
 
-    /** The GitHub Release asset URL this version's dxvfix.jar is expected to be attached at. */
+    /**
+     * The GitHub Release asset URL for this version's full app package matching the OS this is
+     * running on -- both Windows and macOS app-image zips are attached to the same release, one
+     * asset per platform, so the running app only ever downloads the one relevant to it.
+     */
     public String downloadUrl() {
-        return String.format(DOWNLOAD_URL_TEMPLATE, releaseTag);
+        String asset = dxvfix.util.Platform.MAC ? MAC_ASSET_NAME : WINDOWS_ASSET_NAME;
+        return String.format(DOWNLOAD_URL_TEMPLATE, releaseTag, asset);
     }
 
     @Override
