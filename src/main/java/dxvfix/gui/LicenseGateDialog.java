@@ -18,7 +18,7 @@ public final class LicenseGateDialog extends JDialog {
 
     // Placeholder until a dedicated sales/licensing site exists -- swap this for the real URL
     // once it's up. Kept as a single named constant so that's a one-line change later.
-    private static final String PURCHASE_URL = "https://github.com/SergioPimonno/dxvfix";
+    private static final String PURCHASE_URL = "https://dxv-frame-doctor.ru";
 
     private boolean approved = false;
 

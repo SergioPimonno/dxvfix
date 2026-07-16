@@ -28,6 +28,7 @@
 #
 # The self-update mechanism now replaces the ENTIRE install (not just one jar) by downloading and
 # extracting the platform's full app-image zip -- a bigger change than earlier versions' single-jar
-# swap, and not yet verified end-to-end on a real machine. Leave this row at "no" until an actual
-# update run (ideally on a non-critical machine first) has been confirmed to work, then flip it.
+# swap, and not yet verified end-to-end on a real machine. Leave these rows at "no" until an actual
+# update run (ideally on a non-critical machine first) has been confirmed to work, then flip them.
+2.3|v2.3|no|beta
 2.1|v2.1|no|

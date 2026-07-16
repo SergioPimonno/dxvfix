@@ -26,7 +26,10 @@ sources=()
 while IFS= read -r f; do
     sources+=("$f")
 done < <(find "$src" -name '*.java')
-javac -encoding UTF-8 -cp "$flatlaf_jar" -d "$out" "${sources[@]}"
+# --release 17 for the same reason as build.ps1/build-keygen.ps1: pins the output bytecode to
+# JRE 17+ regardless of which JDK actually runs this script (matters most for CI, where the
+# runner's JDK version is whatever actions/setup-java was told to install).
+javac --release 17 -encoding UTF-8 -cp "$flatlaf_jar" -d "$out" "${sources[@]}"
 
 if [ -d "$resources" ]; then
     echo "Copying resources..."

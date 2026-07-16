@@ -16,7 +16,12 @@ New-Item -ItemType Directory -Path $out | Out-Null
 
 $sources = Get-ChildItem -Path $src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 Write-Host "Compiling $($sources.Count) source files..."
-& javac -encoding UTF-8 -cp $flatlafJar.FullName -d $out @sources
+# --release 17 so the jar's bytecode runs on any JRE 17+, not just whatever JDK happens to be on
+# PATH locally -- without this, a jar built with a newer local JDK silently fails with
+# UnsupportedClassVersionError wherever it's actually run/deployed with an older-but-still-
+# supported JRE (hit exactly this with dxvfix-license-admin.jar: built with JDK 25 here,
+# deployed to a JRE 21 VDS -- see build-keygen.ps1's identical fix).
+& javac --release 17 -encoding UTF-8 -cp $flatlafJar.FullName -d $out @sources
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 if (Test-Path $resources) {

@@ -8,6 +8,10 @@
 # license signing key -- NEVER commit this, it's the master secret for the whole license system
 /license-keys/
 
+# website/ is its own separate git repo now (SergioPimonno/dxvfix-website, private) -- excluded
+# here so it can never get swept into this repo by an incautious `git add -A`.
+/website/
+
 # local tooling config
 /.claude/
 

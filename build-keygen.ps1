@@ -10,7 +10,11 @@ New-Item -ItemType Directory -Path $out | Out-Null
 
 $sources = Get-ChildItem -Path $src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 Write-Host "Compiling $($sources.Count) license source files..."
-& javac -d $out @sources
+# --release 17 (not just whatever JDK happens to be on PATH locally) so the jar's bytecode runs
+# on any JRE 17+ -- without this, a jar built here with a newer local JDK silently fails with
+# UnsupportedClassVersionError on a server/deploy target running an older-but-still-supported JRE
+# (hit exactly this: built with JDK 25 locally, deployed to a JRE 21 VDS).
+& javac --release 17 -d $out @sources
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 if (Test-Path $resources) {
