@@ -28,7 +28,10 @@
 #
 # The self-update mechanism now replaces the ENTIRE install (not just one jar) by downloading and
 # extracting the platform's full app-image zip -- a bigger change than earlier versions' single-jar
-# swap, and not yet verified end-to-end on a real machine. Leave these rows at "no" until an actual
-# update run (ideally on a non-critical machine first) has been confirmed to work, then flip them.
-2.3|v2.3|no|beta
+# swap. Verified on Windows (app-image case): built a scratch install, planted a canary file in it,
+# ran the actual generated relaunch script end-to-end -- extraction, robocopy /MIR (confirmed the
+# canary got removed, i.e. it's a real mirror not just an overlay copy), and relaunch into a working
+# window all succeeded. Not separately verified on macOS (no Mac available to test on), though the
+# Unix relaunch script follows the same structure.
+2.3|v2.3|yes|beta
 2.1|v2.1|no|

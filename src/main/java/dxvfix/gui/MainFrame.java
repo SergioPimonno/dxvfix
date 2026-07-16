@@ -29,6 +29,7 @@ import java.util.List;
 public final class MainFrame extends JFrame {
 
     private static final String REPORT_BUG_URL = "https://github.com/SergioPimonno/dxvfix/issues/new";
+    private static final String WEBSITE_URL = "https://dxv-frame-doctor.ru";
 
     private final DefaultListModel<QueueItem> queueModel = new DefaultListModel<>();
     // Always clamp to the viewport's width, regardless of how wide the renderer's content wants
@@ -155,12 +156,15 @@ public final class MainFrame extends JFrame {
         changelog.addActionListener(e -> ChangelogDialog.show(this));
         JMenuItem updateVersion = new JMenuItem(Messages.get("mainframe.menu.updateVersion"));
         updateVersion.addActionListener(e -> UpdateDialog.show(this));
+        JMenuItem website = new JMenuItem(Messages.get("mainframe.menu.website"));
+        website.addActionListener(e -> openWebsite());
         menu.add(checkLicense);
         menu.add(settings);
         menu.add(privacyNotice);
         menu.addSeparator();
         menu.add(help);
         menu.add(reportBug);
+        menu.add(website);
         menu.addSeparator();
         menu.add(about);
         menu.add(changelog);
@@ -172,6 +176,15 @@ public final class MainFrame extends JFrame {
     private void openReportBugPage() {
         try {
             Desktop.getDesktop().browse(new URI(REPORT_BUG_URL));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, Messages.get("mainframe.reportBug.failed", ex.getMessage()),
+                    Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void openWebsite() {
+        try {
+            Desktop.getDesktop().browse(new URI(WEBSITE_URL));
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, Messages.get("mainframe.reportBug.failed", ex.getMessage()),
                     Messages.get("mainframe.error.title"), JOptionPane.ERROR_MESSAGE);
