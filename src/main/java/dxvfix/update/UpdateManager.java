@@ -127,12 +127,23 @@ public final class UpdateManager {
         Path script = Files.createTempFile("dxvfix-update-", ".bat");
         Files.writeString(script, buildRelaunchScript(downloadedJar, currentJar, relaunchCommand), StandardCharsets.UTF_8);
 
-        // "DXVUpdate" here is just the new console window's title, required by `start` whenever
-        // the next argument is itself quoted (otherwise it mistakes the quoted path for the
-        // title) -- a plain non-empty word sidesteps that ambiguity entirely, unlike the more
-        // common "" empty-title idiom, which risks getting double-quoted into "\"\"" once Java's
-        // ProcessBuilder and then cmd.exe /c each re-parse the argument list.
-        new ProcessBuilder("cmd", "/c", "start", "/min", "DXVUpdate", script.toAbsolutePath().toString())
+        // NOT `cmd /c start /min "DXVUpdate" <script>` -- confirmed by direct reproduction that
+        // it doesn't actually work: Java's ProcessBuilder doesn't quote a space-free token like
+        // "DXVUpdate" when building the Win32 command line, so `start` never recognizes it as a
+        // title and instead tries to launch a program literally named "DXVUpdate" -- which fails
+        // with "Windows cannot find 'DXVUpdate'" and the relaunch script never runs at all. A
+        // plain `cmd /c <script>` has no such ambiguity and was verified to actually execute the
+        // script. Windows does not kill child processes when their parent exits, so this doesn't
+        // need `start`'s detachment either -- the script keeps running after this JVM exits.
+        //
+        // Redirect.DISCARD on both streams is not optional: ProcessBuilder defaults to PIPE, and
+        // since this JVM exits right after calling this method without reading those pipes, the
+        // child process tree can block the instant it needs to write to that inherited,
+        // undrained handle -- confirmed by direct reproduction (the same script ran instantly
+        // when redirected to a file, but hung for the full ~30s retry budget as an undrained PIPE).
+        new ProcessBuilder("cmd", "/c", script.toAbsolutePath().toString())
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
     }
 

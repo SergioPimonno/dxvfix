@@ -16,7 +16,7 @@ New-Item -ItemType Directory -Path $out | Out-Null
 
 $sources = Get-ChildItem -Path $src -Recurse -Filter *.java | ForEach-Object { $_.FullName }
 Write-Host "Compiling $($sources.Count) source files..."
-& javac -encoding UTF-8 -cp $flatlafJar.FullName -d $out @sources
+& javac -encoding UTF-8 --release 17 -cp $flatlafJar.FullName -d $out @sources
 if ($LASTEXITCODE -ne 0) { throw "javac failed with exit code $LASTEXITCODE" }
 
 if (Test-Path $resources) {
